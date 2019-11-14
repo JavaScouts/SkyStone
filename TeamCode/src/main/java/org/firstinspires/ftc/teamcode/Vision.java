@@ -2,13 +2,22 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.vuforia.VuMarkTarget;
+import com.vuforia.VuMarkTargetResult;
+import com.vuforia.VuMarkTemplate;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.robotcore.internal.vuforia.VuforiaPoseMatrix;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,6 +33,7 @@ public class Vision {
 
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
+    private VuforiaTrackable trackable;
 
     private HardwareMap hardwareMap;
     private OpMode opMode;
@@ -36,21 +46,19 @@ public class Vision {
         hardwareMap = map;
         opMode = om;
         telemetry = om.telemetry;
-        initVuforia();
-        initTfod();
     }
 
 
     void initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        WebcamName webcamName = null;
+        webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-
-        //  Instantiate the Vuforia engine
+        parameters.cameraName = webcamName;
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
     }
@@ -80,11 +88,46 @@ public class Vision {
         }
     }
 
+    VuforiaTrackables getTargets() {
+        return this.vuforia.loadTrackablesFromAsset("Skystone");
+    }
+
+    void loadTargetAsTemplate() {
+        VuforiaTrackables trackables = getTargets();
+        trackable = trackables.get(0);
+        trackable.setName("Skystone Target"); // can help in debugging; otherwise not necessary
+    }
+
+    void activateTargets(VuforiaTrackables targets) {
+        if(targets != null) {
+            targets.activate();
+        }
+    }
+
+    VuforiaTrackable getTrackable() {
+        return trackable;
+    }
+
+    boolean getIsTargetSeen() {
+        boolean vis = false;
+        if (trackable != null) {
+            vis = ((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible();
+        } else {
+            telemetry.addLine("Trackable is null");
+            telemetry.update();
+        }
+        return vis;
+    }
+
     List<Recognition> getRecognitions() {
         if (tfod != null) {
             return tfod.getUpdatedRecognitions();
         }
         return null;
+    }
+
+    String format(OpenGLMatrix transformationMatrix) {
+        return (transformationMatrix != null) ? transformationMatrix.formatAsTransform() : "null";
     }
 
     Recognition getFirstSkystoneSeen() {
@@ -138,5 +181,8 @@ public class Vision {
         }
         return 0;
     }
+
+
+
 
 }

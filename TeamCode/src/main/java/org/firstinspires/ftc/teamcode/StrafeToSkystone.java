@@ -5,7 +5,21 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Autonomous(name="Find Skystone")
 public class StrafeToSkystone extends LinearOpMode {
@@ -25,11 +39,18 @@ public class StrafeToSkystone extends LinearOpMode {
     private Vision v = new Vision();
     private ElapsedTime runtime = new ElapsedTime();
 
+    private VuforiaLocalizer vuforia;
+    private VuforiaTrackables trackables;
+
+    private static final String VUFORIA_KEY =
+            "AdQfAyr/////AAABmUh6Z5KT20+RoULUpgxmoc9nIV2FKHL5EaGvj3PPgHtOujprWlIvVPgxtFaYImMYo175bgHUe+tHxxYynQmrgtrPcCBOIgpyptC6DCkr4lG4jZ59rDYEVPh+IUNKMWOgtphivaS+ZSclNCN2+uE40/oqQ0HuRLAGcxe/UviDbt6IafV2RkFFs412uP1E5XL/66hm46TahtlARJNQsKMTrxCNa8OFwvzC9ZW/ryimTGl46MdL9L6oI8JLHGm7GB7y7GS9GtqasKZvhgP4QCNgKHUDiC6urJ2BML9DO34qRY9zEELLG1fi92G4tB7P/0BsREjvNs28UNrXYrldXaJkAIK3pK2NJHNWFUuy1h7mgd+x";
+    private VuforiaTrackable trackable;
+
     @Override
     public void runOpMode() {
 
         h.init(hardwareMap, this);
-        v.init(hardwareMap, this);
+        setupVision();
         l = h.leftDrive;
         r = h.rightDrive;
         bl = h.backLDrive;
@@ -42,18 +63,19 @@ public class StrafeToSkystone extends LinearOpMode {
 
         waitForStart();
 
-        v.activateTfod();
+        trackables.activate();
+        sleep(1000);
 
-        driveToPoint(0.4, -14,0,0,10,"");
+        driveToPoint(0.35, -17,0,0,10,"");
         sleep(500);
-        driveToPoint(0.21,0,500,0,10, "detect");
-        h.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        driveToPoint(0.13, 0,500,0,10,"detect-v2");
         sleep(500);
-        driveToPoint(0.4,-35,0,0,10,"");
-        sleep(200);
-        driveToPoint(0.4,0,0,-PI/2,10,"");
+        driveToPoint(0.4, -36,0,0,10,"");
         sleep(500);
-        driveToPoint(0.4,-15,0,0,10,"collect");
+        driveToPoint(0.35,0,0,-PI/2,10,"");
+        sleep(250);
+        driveToPoint(0.25,-7,0,0,10,"collect");
+
 
     }
 
@@ -89,20 +111,15 @@ public class StrafeToSkystone extends LinearOpMode {
             bl.setPower(bl_power);
             br.setPower(br_power);
 
-            boolean shouldDie = false;
             while (  opModeIsActive() &&
                     (l.isBusy() || r.isBusy() || bl.isBusy() || br.isBusy()) &&
-                    (runtime.seconds() < timeoutS) &&
-                    !shouldDie) {
+                    (runtime.seconds() < timeoutS)) {
 
                 telemetry.addLine("WE GOIn");
                 telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l_power, r_power, bl_power, br_power);
-                /*telemetry.addData("Path - Target(c)",  "Running to %7d :%7d :%7d :%7d", (int)l_count, (int)r_count, (int)bl_count, (int)br_count);
-                telemetry.addData("Path - Current(c)",
-                        "Running at %7d :%7d :%7d :%7d",
-                        l.getCurrentPosition(), r.getCurrentPosition(), bl.getCurrentPosition(), br.getCurrentPosition());*/
+
                 switch(command){
-                    case "detect":
+                    case "detect-v1":
                         Recognition sky = v.getFirstSkystoneSeen();
 
                         if (sky != null) {
@@ -110,11 +127,22 @@ public class StrafeToSkystone extends LinearOpMode {
                             telemetry.addData("number of rec", v.numberOfRecognitions());
                             telemetry.addData("what is seen?", v.whatIsSeen());
                             if (sky.getLeft() < 123857829) {
-                                telemetry.addData("skystone found, stopping robot.", "");
-                                h.setPower(0);
-                                shouldDie = true;
+                                cancelMovement();
                                 return;
                             }
+                        }
+                        break;
+                    case "detect-v2":
+                        OpenGLMatrix pose = ((VuforiaTrackableDefaultListener) trackable.getListener()).getFtcCameraFromTarget();
+                        if (pose != null) {
+                            telemetry.addData("Pose", v.format(pose));
+                            Orientation angles = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+                            if(angles.firstAngle > -220) {
+                                cancelMovement();
+                                return;
+                            }
+                        } else {
+                            telemetry.addLine("No skystone found.");
                         }
                         break;
                     case "collect":
@@ -131,11 +159,17 @@ public class StrafeToSkystone extends LinearOpMode {
                 }
             }
 
-            telemetry.update();
-            h.setPower(0);
-            h.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            cancelMovement();
 
         }
+
+    }
+
+    void cancelMovement() {
+
+        telemetry.update();
+        h.setPower(0);
+        h.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
@@ -151,4 +185,24 @@ public class StrafeToSkystone extends LinearOpMode {
     double map(double x, double min_a, double max_a, double min_b, double max_b) {
         return (x - min_a) / (max_a - min_a) * (max_b - min_b) + min_b;
     }
+
+    void setupVision() {
+
+        WebcamName webcamName = null;
+        webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraName = webcamName;
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        trackables = this.vuforia.loadTrackablesFromAsset("Skystone");
+        trackable = trackables.get(0);
+        trackable.setName("Skystone Target"); // can help in debugging; otherwise not necessary
+
+    }
+
+
 }
