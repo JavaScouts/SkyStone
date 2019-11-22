@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.content.Context;
+
+import com.qualcomm.ftccommon.SoundPlayer;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -24,6 +28,7 @@ import java.util.List;
 @Autonomous(name="Find Skystone")
 public class StrafeToSkystone extends LinearOpMode {
 
+    private ModernRoboticsI2cGyro g;
     private DcMotor l, r, bl, br, c1, c2;
     private static final double WHEEL_RADIUS = 2.98;
     private static final double CENTER_TO_WHEEL = 8.53;
@@ -57,31 +62,34 @@ public class StrafeToSkystone extends LinearOpMode {
         br = h.backRDrive;
         c1 = h.Collec1;
         c2 = h.Collec2;
-        //scale2 = 1 / scale;
+        g = h.gyro;
         h.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         h.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         waitForStart();
 
         trackables.activate();
-        sleep(1000);
+        sleep(400);
 
-        driveToPoint(0.35, -17,0,0,10,"");
-        sleep(500);
-        driveToPoint(0.13, 0,500,0,10,"detect-v2");
-        sleep(500);
-        driveToPoint(0.4, -36,0,0,10,"");
-        sleep(500);
-        driveToPoint(0.35,0,0,-PI/2,10,"");
+        driveToPoint(0.35, 0,-33,0,10,"");
+        sleep(200);
+        driveToPoint(0.09, -500,0,0,10,"detect-v2");
+        sleep(200);
+        driveToPoint(0.23,21,0,0,10,"");
+        sleep(100);
+        driveToPoint(0.49,0,0,PI/5,10,"");
+        sleep(100);
+        driveToPoint(0.25,-26,0,0,10,"collect");
         sleep(250);
-        driveToPoint(0.25,-7,0,0,10,"collect");
-
+        driveToPoint(0.3,26,0,0,10,"collect");
+        sleep(100);
+        driveToPoint(0.49,0,0,-PI/5,10,"");
+        sleep(100);
+        driveToPoint(0.3,0,36,0,10,"");
 
     }
 
-
-
-    void driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS, String command) {
+    double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS, String command) {
 
         if (opModeIsActive()) {
 
@@ -128,7 +136,7 @@ public class StrafeToSkystone extends LinearOpMode {
                             telemetry.addData("what is seen?", v.whatIsSeen());
                             if (sky.getLeft() < 123857829) {
                                 cancelMovement();
-                                return;
+                                return 0;
                             }
                         }
                         break;
@@ -137,9 +145,9 @@ public class StrafeToSkystone extends LinearOpMode {
                         if (pose != null) {
                             telemetry.addData("Pose", v.format(pose));
                             Orientation angles = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-                            if(angles.firstAngle > -220) {
+                            if(angles.firstAngle > -50) {
                                 cancelMovement();
-                                return;
+                                return 0;
                             }
                         } else {
                             telemetry.addLine("No skystone found.");
@@ -159,9 +167,22 @@ public class StrafeToSkystone extends LinearOpMode {
                 }
             }
 
+            if (command.equals("correct")) {
+                int cur = g.getHeading();
+                double curRad = Math.toRadians(cur);
+                double err = rot - curRad;
+                //driveToPoint(powerLimit,0,0,err,10,"");
+                telemetry.addData("cur",curRad);
+                telemetry.addData("tar",rot);
+                telemetry.update();
+            }
+
             cancelMovement();
 
         }
+        telemetry.addLine("FINISHED MOVE");
+        telemetry.update();
+        return 0;
 
     }
 
@@ -175,10 +196,10 @@ public class StrafeToSkystone extends LinearOpMode {
 
     boolean closeEnough(int l_target, int r_target, int bl_target, int br_target) {
 
-        return  (l_target-9<=l.getCurrentPosition() && l.getCurrentPosition()<=l_target+9) ||
-                (r_target-9<=r.getCurrentPosition() && r.getCurrentPosition()<=r_target+9) ||
-                (bl_target-9<=bl.getCurrentPosition() && bl.getCurrentPosition()<=bl_target+9) ||
-                (br_target-9<=br.getCurrentPosition() && br.getCurrentPosition()<=br_target+9);
+        return  (l_target-30<=l.getCurrentPosition() && l.getCurrentPosition()<=l_target+30) &&
+                (r_target-30<=r.getCurrentPosition() && r.getCurrentPosition()<=r_target+30) &&
+                (bl_target-30<=bl.getCurrentPosition() && bl.getCurrentPosition()<=bl_target+30) &&
+                (br_target-30<=br.getCurrentPosition() && br.getCurrentPosition()<=br_target+30);
 
     }
 
@@ -203,6 +224,5 @@ public class StrafeToSkystone extends LinearOpMode {
         trackable.setName("Skystone Target"); // can help in debugging; otherwise not necessary
 
     }
-
 
 }

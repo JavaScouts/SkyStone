@@ -4,7 +4,9 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -52,6 +54,7 @@ public class Hardware {
         Collec1 = map.dcMotor.get("c1");
         Collec2 = map.dcMotor.get("c2");
         range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
+        gyro = map.get(ModernRoboticsI2cGyro.class, "g");
 
         //reverse nessecary motors
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
