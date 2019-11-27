@@ -19,6 +19,9 @@ public class NewTeleOp extends LinearOpMode {
     DcMotor Collec1;
     DcMotor Collec2;
     DcMotor Rev;
+    Servo big;
+    Servo small;
+    Servo found;
 
     double power = 0.4;
     double pos = 0;
@@ -34,6 +37,9 @@ public class NewTeleOp extends LinearOpMode {
 
         Collec1 = hardwareMap.dcMotor.get("c1");
         Collec2 = hardwareMap.dcMotor.get("c2");
+        small = hardwareMap.servo.get("small");
+        big = hardwareMap.servo.get("big");
+        found = hardwareMap.servo.get("found");
 
         Collec1.setDirection(DcMotorSimple.Direction.REVERSE);
         Collec2.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -87,6 +93,21 @@ public class NewTeleOp extends LinearOpMode {
                 robot.backRDrive.setPower(-power);
                 robot.rightDrive.setPower(-power);
 
+            }
+            if (gamepad2.x){
+                small.setPosition(0);
+            } else if (gamepad2.b){
+                small.setPosition(0.85);
+            }
+            if (gamepad2.y){
+                big.setPosition(0);
+            } else if (gamepad2.a){
+                big.setPosition(1.0);
+            }
+            if (gamepad2.left_bumper){
+                found.setPosition(0);
+            } else if (gamepad2.right_bumper){
+                found.setPosition(0.5);
             }
 
             Collec1.setPower(gamepad2.left_stick_y);
