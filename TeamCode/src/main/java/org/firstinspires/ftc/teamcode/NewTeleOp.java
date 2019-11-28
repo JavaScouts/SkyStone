@@ -97,7 +97,7 @@ public class NewTeleOp extends LinearOpMode {
             if (gamepad2.x){
                 small.setPosition(0);
             } else if (gamepad2.b){
-                small.setPosition(0.85);
+                small.setPosition(0.75);
             }
             if (gamepad2.y){
                 big.setPosition(0);

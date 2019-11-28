@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode;
 import android.content.Context;
 
 import com.qualcomm.ftccommon.SoundPlayer;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -15,6 +17,7 @@ import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
@@ -29,6 +32,8 @@ import java.util.List;
 public class StrafeToSkystone extends LinearOpMode {
 
     private ModernRoboticsI2cGyro g;
+    private ModernRoboticsI2cColorSensor c;
+    private ModernRoboticsI2cRangeSensor rn;
     private DcMotor l, r, bl, br, c1, c2;
     private static final double WHEEL_RADIUS = 2.98;
     private static final double CENTER_TO_WHEEL = 8.53;
@@ -55,7 +60,7 @@ public class StrafeToSkystone extends LinearOpMode {
     public void runOpMode() {
 
         h.init(hardwareMap, this);
-        setupVision();
+        //setupVision();
         l = h.leftDrive;
         r = h.rightDrive;
         bl = h.backLDrive;
@@ -63,29 +68,35 @@ public class StrafeToSkystone extends LinearOpMode {
         c1 = h.Collec1;
         c2 = h.Collec2;
         g = h.gyro;
+        c = h.color;
+        rn = h.range;
         h.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         h.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         waitForStart();
 
-        trackables.activate();
+        //trackables.activate();
         sleep(400);
 
-        driveToPoint(0.35, 0,-33,0,10,"");
+        driveToPoint(0.35, 0,-40,0,10,"");
         sleep(200);
-        driveToPoint(0.09, -500,0,0,10,"detect-v2");
+        driveToPoint(0.14, -500,0,0,10,"detect-v3");
         sleep(200);
-        driveToPoint(0.23,21,0,0,10,"");
+        driveToPoint(0.23,6,0,0,10,"");
         sleep(100);
-        driveToPoint(0.49,0,0,PI/5,10,"");
+        driveToPoint(0.4,0,0,PI/4,10,"");
         sleep(100);
-        driveToPoint(0.25,-26,0,0,10,"collect");
+        driveToPoint(0.25,-17,0,0,10,"collect");
         sleep(250);
-        driveToPoint(0.3,26,0,0,10,"collect");
+        driveToPoint(0.3,17,0,0,10,"collect");
         sleep(100);
-        driveToPoint(0.49,0,0,-PI/5,10,"");
+        driveToPoint(0.4,0,0,-PI/4,10,"");
         sleep(100);
-        driveToPoint(0.3,0,36,0,10,"");
+        driveToPoint(0.3,0,28,0,10,"");
+        sleep(100);
+        driveToPoint(0.3,1000,0,0,10,"range-1");
+        sleep(100);
+
 
     }
 
@@ -153,10 +164,39 @@ public class StrafeToSkystone extends LinearOpMode {
                             telemetry.addLine("No skystone found.");
                         }
                         break;
+                    case "detect-v3":
+                        if (c.red() == 0 && runtime.seconds() < 0.25 ) {
+                            telemetry.addData("Facing", "Air");
+                            break;
+                        }
+                        if(c.red() > 0  && runtime.seconds() > 0.25) {
+                            telemetry.addData("Facing","Stone");
+                            break;
+                        }
+                        if(c.red() == 0 && runtime.seconds() > 0.25) {
+                            telemetry.addData("Facing","Skystone");
+                            telemetry.update();
+                            cancelMovement();
+                            return 0;
+                        }
+                        break;
+
                     case "collect":
                         c1.setPower(1.0);
                         c2.setPower(1.0);
                         break;
+
+                    case "range-1":
+                        double dist = rn.getDistance(DistanceUnit.INCH);
+                        if (dist < 20) {
+                            telemetry.addLine("Stopping due to range");
+                            cancelMovement();
+                            return 0;
+                        } else {
+                            telemetry.addData("Range:", dist);
+                        }
+                        break;
+
                     default:
                         telemetry.addLine("we goin folks");
                         break;

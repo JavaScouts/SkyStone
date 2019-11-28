@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -23,6 +24,7 @@ public class Hardware {
 
     ModernRoboticsI2cGyro gyro;
     ModernRoboticsI2cRangeSensor range;
+    ModernRoboticsI2cColorSensor color;
 
     //driving coefficients
     private double driveAxial = 0;   // Positive is forward
@@ -55,6 +57,7 @@ public class Hardware {
         Collec2 = map.dcMotor.get("c2");
         range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
+        color = map.get(ModernRoboticsI2cColorSensor.class, "c");
 
         //reverse nessecary motors
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
