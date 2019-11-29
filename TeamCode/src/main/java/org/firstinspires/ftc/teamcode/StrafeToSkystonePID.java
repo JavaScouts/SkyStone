@@ -87,165 +87,16 @@ public class StrafeToSkystonePID extends LinearOpMode {
         telemetry.clear(); telemetry.update();
         waitForStart();
 
-        pidDrive(0.5, -100, 0, 0, 10, 0.05);
+        pidDrive(0.5, -100,0, 10, 0.05);
         sleep(500);
-        pidDrive(0.5,0,-50,0,10,0.05);
+        pidDrive(0.5,100,0,10,0.05);
 
     }
 
-    void servoToPoint(Servo servo, double pos) {
-        servo.setPosition(pos);
-    }
-
-    double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS) {
-
-        return driveToPoint(powerLimit, x, y, rot, timeoutS, "", 0);
-
-    }
-
-    double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS, String command) {
-
-        return driveToPoint(powerLimit, x, y, rot, timeoutS, command, 0);
-
-    }
-
-
-    double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS, String command, double params) {
-
-        if (opModeIsActive()) {
-
-            double reciprocal_radius = 1 / WHEEL_RADIUS;
-            double lr = reciprocal_radius * (x - y - (rot * (2 * CENTER_TO_WHEEL)));
-            double rr = reciprocal_radius * (x + y + (rot * (2 * CENTER_TO_WHEEL)));
-            double blr = reciprocal_radius * (x + y - (rot * (2 * CENTER_TO_WHEEL)));
-            double brr = reciprocal_radius * (x - y + (rot * (2 * CENTER_TO_WHEEL)));
-            double l_count = l.getCurrentPosition() + (lr * scale2 * COUNTS_PER_INCH);
-            double r_count = r.getCurrentPosition() + (rr * scale2 * COUNTS_PER_INCH);
-            double bl_count = bl.getCurrentPosition() + (blr * scale2 * COUNTS_PER_INCH);
-            double br_count = br.getCurrentPosition() + (brr * scale2 * COUNTS_PER_INCH);
-            double l_power = map(lr * scale3, -l_count * scale3, l_count * scale3, powerLimit, powerLimit);
-            double r_power = map(rr * scale3, -r_count * scale3, r_count * scale3, powerLimit, powerLimit);
-            double bl_power = map(blr * scale3, -bl_count * scale3, bl_count * scale3, powerLimit, powerLimit);
-            double br_power = map(brr * scale3, -br_count * scale3, br_count * scale3, powerLimit, powerLimit);
-            l.setTargetPosition((int) l_count);
-            r.setTargetPosition((int) r_count);
-            bl.setTargetPosition((int) bl_count);
-            br.setTargetPosition((int) br_count);
-
-            h.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            runtime.reset();
-            l.setPower(Math.abs(l_power));
-            r.setPower(Math.abs(r_power));
-            bl.setPower(Math.abs(bl_power));
-            br.setPower(Math.abs(br_power));
-
-            while (opModeIsActive() &&
-                    (l.isBusy() || r.isBusy() || bl.isBusy() || br.isBusy()) &&
-                    (runtime.seconds() < timeoutS)) {
-
-                telemetry.addLine("WE GOIn");
-                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l_power, r_power, bl_power, br_power);
-
-                switch (command) {
-                    case "detect-v1":
-                        Recognition sky = v.getFirstSkystoneSeen();
-
-                        if (sky != null) {
-                            telemetry.addData("skystone found", sky.getLeft());
-                            telemetry.addData("number of rec", v.numberOfRecognitions());
-                            telemetry.addData("what is seen?", v.whatIsSeen());
-                            if (sky.getLeft() < 123857829) {
-                                cancelMovement();
-                                return 0;
-                            }
-                        }
-                        break;
-                    case "detect-v2":
-                        OpenGLMatrix pose = ((VuforiaTrackableDefaultListener) trackable.getListener()).getFtcCameraFromTarget();
-                        if (pose != null) {
-                            telemetry.addData("Pose", v.format(pose));
-                            Orientation angles = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-                            if (angles.firstAngle > -50) {
-                                cancelMovement();
-                                return 0;
-                            }
-                        } else {
-                            telemetry.addLine("No skystone found.");
-                        }
-                        break;
-                    case "detect-v3":
-                        double delay = 1.1;
-                        if (params != 0) {
-                            delay = params;
-                        }
-                        if (c.red() == 0 && runtime.seconds() < delay) {
-                            telemetry.addData("Facing", "Waiting");
-                            break;
-                        }
-                        if (c.red() > 0 && runtime.seconds() > delay) {
-                            telemetry.addData("Facing", "Stone");
-                            break;
-                        }
-                        if (c.red() == 0 && runtime.seconds() > delay) {
-                            telemetry.addData("Facing", "Skystone");
-                            cancelMovement();
-                            return 0;
-                        }
-                        break;
-
-                    case "collect":
-                        c1.setPower(1.0);
-                        c2.setPower(1.0);
-                        break;
-
-                    case "range-1":
-                        double stop = 20;
-                        if (params != 0) {
-                            stop = params;
-                        }
-                        double dist = rn.getDistance(DistanceUnit.INCH);
-                        if (dist < stop) {
-                            telemetry.addLine("Stopping due to range");
-                            cancelMovement();
-                            return 0;
-                        } else {
-                            telemetry.addData("Range:", dist);
-                        }
-                        break;
-
-                    default:
-                        telemetry.addLine("we goin folks");
-                        break;
-                }
-                telemetry.update();
-                if (closeEnough((int) l_count, (int) r_count, (int) bl_count, (int) br_count)) {
-                    break;
-                }
-            }
-
-            if (command.equals("correct")) {
-                int cur = g.getHeading();
-                double curRad = Math.toRadians(cur);
-                double err = rot - curRad;
-                //driveToPoint(powerLimit,0,0,err,10,"");
-                telemetry.addData("cur", curRad);
-                telemetry.addData("tar", rot);
-                telemetry.update();
-            }
-
-            cancelMovement();
-
-        }
-        telemetry.addLine("FINISHED MOVE");
-        telemetry.update();
-        return 0;
-
-    }
-
-    void pidDrive(double powerLimit, double x, double y, double rot, double timeoutS, double correction) {
+    void pidDrive(double powerLimit, double x, double rot, double timeoutS, double correction) {
 
         rot = 0;
+        double y = 0;
         if (opModeIsActive()) {
 
             double reciprocal_radius = 1 / WHEEL_RADIUS;
@@ -296,6 +147,75 @@ public class StrafeToSkystonePID extends LinearOpMode {
                     bl.setPower(bl.getPower() - correction);
                     r.setPower(r.getPower() + correction);
                     br.setPower(br.getPower() + correction);
+                    telemetry.addLine("Correcting for rightwards drift.");
+
+                }
+                telemetry.update();
+                if (closeEnough((int) l_count, (int) r_count, (int) bl_count, (int) br_count)) {
+                    break;
+                }
+                sleep(320);
+
+            }
+            cancelMovement();
+        }
+    }
+
+
+    void pidStrafe(double powerLimit, double y, double rot, double timeoutS, double correction) {
+
+        rot = 0;
+        double x = 0;
+        if (opModeIsActive()) {
+
+            double reciprocal_radius = 1 / WHEEL_RADIUS;
+            double lr = reciprocal_radius * (x - y - (rot * (2 * CENTER_TO_WHEEL)));
+            double rr = reciprocal_radius * (x + y + (rot * (2 * CENTER_TO_WHEEL)));
+            double blr = reciprocal_radius * (x + y - (rot * (2 * CENTER_TO_WHEEL)));
+            double brr = reciprocal_radius * (x - y + (rot * (2 * CENTER_TO_WHEEL)));
+            double l_count = l.getCurrentPosition() + (lr * scale2 * COUNTS_PER_INCH);
+            double r_count = r.getCurrentPosition() + (rr * scale2 * COUNTS_PER_INCH);
+            double bl_count = bl.getCurrentPosition() + (blr * scale2 * COUNTS_PER_INCH);
+            double br_count = br.getCurrentPosition() + (brr * scale2 * COUNTS_PER_INCH);
+            double l_power = map(lr * scale3, -l_count * scale3, l_count * scale3, powerLimit, powerLimit);
+            double r_power = map(rr * scale3, -r_count * scale3, r_count * scale3, powerLimit, powerLimit);
+            double bl_power = map(blr * scale3, -bl_count * scale3, bl_count * scale3, powerLimit, powerLimit);
+            double br_power = map(brr * scale3, -br_count * scale3, br_count * scale3, powerLimit, powerLimit);
+            l.setTargetPosition((int) l_count);
+            r.setTargetPosition((int) r_count);
+            bl.setTargetPosition((int) bl_count);
+            br.setTargetPosition((int) br_count);
+
+            h.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            runtime.reset();
+            l.setPower(l_power);
+            r.setPower(r_power);
+            bl.setPower(bl_power);
+            br.setPower(br_power);
+
+            while (opModeIsActive() &&
+                    (l.isBusy() || r.isBusy() || bl.isBusy() || br.isBusy()) &&
+                    (runtime.seconds() < timeoutS)) {
+
+                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l.getPower(), r.getPower(), bl.getPower(), br.getPower());
+                telemetry.addData("Gyro",g.getHeading());
+
+                if(g.getHeading() < rot) {
+
+                    l.setPower(l.getPower() - correction);
+                    bl.setPower(bl.getPower() + correction);
+                    r.setPower(r.getPower() - correction);
+                    br.setPower(br.getPower() + correction);
+                    telemetry.addLine("Correcting for leftwards drift.");
+
+                }
+                if(g.getHeading() > rot) {
+
+                    l.setPower(l.getPower() + correction);
+                    bl.setPower(bl.getPower() - correction);
+                    r.setPower(r.getPower() + correction);
+                    br.setPower(br.getPower() - correction);
                     telemetry.addLine("Correcting for rightwards drift.");
 
                 }
