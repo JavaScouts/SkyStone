@@ -105,9 +105,9 @@ public class NewTeleOp extends LinearOpMode {
                 big.setPosition(1.0);
             }
             if (gamepad2.left_bumper){
-                found.setPosition(0);
+                robot.hookLeft.setPosition(0);
             } else if (gamepad2.right_bumper){
-                found.setPosition(0.5);
+                robot.hookLeft.setPosition(0.7);
             }
 
             Collec1.setPower(gamepad2.left_stick_y);
@@ -119,6 +119,7 @@ public class NewTeleOp extends LinearOpMode {
             telemetry.addData("fr", robot.rightDrive.getCurrentPosition());
             telemetry.addData("bl", robot.backLDrive.getCurrentPosition());
             telemetry.addData("br", robot.backRDrive.getCurrentPosition());
+            telemetry.addData("z", robot.gyro.getHeading());
 
             telemetry.update();
         }

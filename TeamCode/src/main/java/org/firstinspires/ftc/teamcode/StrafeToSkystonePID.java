@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.content.Context;
-
-import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
@@ -26,16 +23,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Autonomous(name="Find Skystone")
-public class StrafeToSkystone extends LinearOpMode {
+@Autonomous(name="Find Skystone via PID")
+public class StrafeToSkystonePID extends LinearOpMode {
 
     private ModernRoboticsI2cGyro g;
     private ModernRoboticsI2cColorSensor c;
     private ModernRoboticsI2cRangeSensor rn;
     private DcMotor l, r, bl, br, c1, c2;
+    private Servo hl;
     private static final double WHEEL_RADIUS = 2.98;
     private static final double CENTER_TO_WHEEL = 8.53;
     private static final double COUNTS_PER_MOTOR_REV = 537.6;
@@ -68,6 +63,7 @@ public class StrafeToSkystone extends LinearOpMode {
         br = h.backRDrive;
         c1 = h.Collec1;
         c2 = h.Collec2;
+        hl = h.hookLeft;
         g = h.gyro;
         c = h.color;
         rn = h.range;
@@ -88,41 +84,12 @@ public class StrafeToSkystone extends LinearOpMode {
         }
 
         telemetry.log().clear(); telemetry.log().add("Gyro Calibrated. Press Start.");
-        telemetry.clear();
+        telemetry.clear(); telemetry.update();
+        waitForStart();
 
-        while (!isStarted()) {
-            telemetry.addData(">", "Robot Heading = %d", g.getIntegratedZValue());
-            telemetry.update();
-        }
-
-        g.resetZAxisIntegrator();
-
-        driveToPoint(0.35, 0, -40, 0, 10);
-        sleep(200);
-        driveToPoint(0.2, -500, 0, 0, 10, "detect-v3",2.2);
-        sleep(200);
-        driveToPoint(0.23, 9, 0, 0, 10);
-        sleep(100);
-        driveToPoint(0.4, 0, 0, PI / 4, 10);
-        sleep(100);
-        driveToPoint(0.25, -17, 0, 0, 10, "collect");
-        sleep(250);
-        driveToPoint(0.3, 17, 0, 0, 10, "collect");
-        sleep(100);
-        driveToPoint(0.4, 0, 0, -PI / 4, 10);
-        sleep(100);
-        driveToPoint(0.3, 0, 8, 0, 10);
-        sleep(100);
-        driveToPoint(0.3, 1000, 0, 0, 10, "range-1", 20);
-        sleep(100);
-        driveToPoint(0.4,0,-15,0,10);
+        pidDrive(0.5, -100, 0, 0, 10, 0.05);
         sleep(500);
-        h.hookLeft.setPosition(0.6);
-        sleep(100);
-        h.hookLeft.setPosition(0);
-        sleep(500);
-        driveToPoint(0.4,0,50,0,10);
-
+        pidDrive(0.5,0,-50,0,10,0.05);
 
     }
 
@@ -311,10 +278,10 @@ public class StrafeToSkystone extends LinearOpMode {
                     (l.isBusy() || r.isBusy() || bl.isBusy() || br.isBusy()) &&
                     (runtime.seconds() < timeoutS)) {
 
-                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l_power, r_power, bl_power, br_power);
-                telemetry.addData("Gyro",g.getIntegratedZValue());
+                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l.getPower(), r.getPower(), bl.getPower(), br.getPower());
+                telemetry.addData("Gyro",g.getHeading());
 
-                if(g.getIntegratedZValue() < rot) {
+                if(g.getHeading() < rot) {
 
                     l.setPower(l.getPower() + correction);
                     bl.setPower(bl.getPower() + correction);
@@ -323,7 +290,7 @@ public class StrafeToSkystone extends LinearOpMode {
                     telemetry.addLine("Correcting for leftwards drift.");
 
                 }
-                if(g.getIntegratedZValue() > rot) {
+                if(g.getHeading() > rot) {
 
                     l.setPower(l.getPower() - correction);
                     bl.setPower(bl.getPower() - correction);
@@ -336,6 +303,8 @@ public class StrafeToSkystone extends LinearOpMode {
                 if (closeEnough((int) l_count, (int) r_count, (int) bl_count, (int) br_count)) {
                     break;
                 }
+                sleep(320);
+
             }
             cancelMovement();
         }

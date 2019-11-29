@@ -22,6 +22,8 @@ public class Hardware {
     DcMotor Collec1;
     DcMotor Collec2;
 
+    Servo hookLeft;
+
     ModernRoboticsI2cGyro gyro;
     ModernRoboticsI2cRangeSensor range;
     ModernRoboticsI2cColorSensor color;
@@ -55,6 +57,7 @@ public class Hardware {
         backRDrive = map.dcMotor.get("br");
         Collec1 = map.dcMotor.get("c1");
         Collec2 = map.dcMotor.get("c2");
+        hookLeft = map.servo.get("hl");
         range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
         color = map.get(ModernRoboticsI2cColorSensor.class, "c");
