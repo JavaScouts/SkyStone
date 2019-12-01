@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -37,7 +38,9 @@ public class StrafeToSkystonePID extends LinearOpMode {
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
     private static final double WHEEL_DIAMETER_INCHES = 2.95;
     private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
-    private static final double PI = 3.1415;
+    static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
+    static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
+
     private double scale2 = 2.35;
     private double scale3 = 0.1;
 
@@ -87,24 +90,24 @@ public class StrafeToSkystonePID extends LinearOpMode {
         telemetry.clear(); telemetry.update();
         waitForStart();
 
-        pidDrive(0.5, -100,0, 10, 0.05,0);
+        pidDrive(0.5, -100,0,0, 10, 0.02,0);
         sleep(500);
-        pidDrive(0.5,100,0,10,0.05, 0);
-
+        pidDrive(0.5,0,100,0,10,0.03, 0);
+        sleep(500);
+        gyroTurn(0.5,90);
 
     }
 
-    void pidDrive(double powerLimit, double x, double rot, double timeoutS, double correction, int offset) {
+    void pidDrive(double powerLimit, double x, double y, double rot, double timeoutS, double correction, int offset) {
 
-        rot = 0;
-        double y = 0;
+        double theta = 0;
         if (opModeIsActive()) {
 
             double reciprocal_radius = 1 / WHEEL_RADIUS;
-            double lr = reciprocal_radius * (x - y - (rot * (2 * CENTER_TO_WHEEL)));
-            double rr = reciprocal_radius * (x + y + (rot * (2 * CENTER_TO_WHEEL)));
-            double blr = reciprocal_radius * (x + y - (rot * (2 * CENTER_TO_WHEEL)));
-            double brr = reciprocal_radius * (x - y + (rot * (2 * CENTER_TO_WHEEL)));
+            double lr = reciprocal_radius * (x - y - (theta * (2 * CENTER_TO_WHEEL)));
+            double rr = reciprocal_radius * (x + y + (theta * (2 * CENTER_TO_WHEEL)));
+            double blr = reciprocal_radius * (x + y - (theta * (2 * CENTER_TO_WHEEL)));
+            double brr = reciprocal_radius * (x - y + (theta * (2 * CENTER_TO_WHEEL)));
             double l_count = l.getCurrentPosition() + (lr * scale2 * COUNTS_PER_INCH);
             double r_count = r.getCurrentPosition() + (rr * scale2 * COUNTS_PER_INCH);
             double bl_count = bl.getCurrentPosition() + (blr * scale2 * COUNTS_PER_INCH);
@@ -166,92 +169,12 @@ public class StrafeToSkystonePID extends LinearOpMode {
                 if (closeEnough((int) l_count, (int) r_count, (int) bl_count, (int) br_count)) {
                     break;
                 }
-                sleep(75);
+                sleep(15);
 
             }
             cancelMovement();
         }
     }
-
-
-    void pidStrafe(double powerLimit, double y, double rot, double timeoutS, double correction, int offset) {
-
-        rot = 0;
-        double x = 0;
-        if (opModeIsActive()) {
-
-            double reciprocal_radius = 1 / WHEEL_RADIUS;
-            double lr = reciprocal_radius * (x - y - (rot * (2 * CENTER_TO_WHEEL)));
-            double rr = reciprocal_radius * (x + y + (rot * (2 * CENTER_TO_WHEEL)));
-            double blr = reciprocal_radius * (x + y - (rot * (2 * CENTER_TO_WHEEL)));
-            double brr = reciprocal_radius * (x - y + (rot * (2 * CENTER_TO_WHEEL)));
-            double l_count = l.getCurrentPosition() + (lr * scale2 * COUNTS_PER_INCH);
-            double r_count = r.getCurrentPosition() + (rr * scale2 * COUNTS_PER_INCH);
-            double bl_count = bl.getCurrentPosition() + (blr * scale2 * COUNTS_PER_INCH);
-            double br_count = br.getCurrentPosition() + (brr * scale2 * COUNTS_PER_INCH);
-            double l_power = map(lr * scale3, -l_count * scale3, l_count * scale3, powerLimit, powerLimit);
-            double r_power = map(rr * scale3, -r_count * scale3, r_count * scale3, powerLimit, powerLimit);
-            double bl_power = map(blr * scale3, -bl_count * scale3, bl_count * scale3, powerLimit, powerLimit);
-            double br_power = map(brr * scale3, -br_count * scale3, br_count * scale3, powerLimit, powerLimit);
-            l.setTargetPosition((int) l_count);
-            r.setTargetPosition((int) r_count);
-            bl.setTargetPosition((int) bl_count);
-            br.setTargetPosition((int) br_count);
-
-            h.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            runtime.reset();
-            l.setPower(l_power);
-            r.setPower(r_power);
-            bl.setPower(bl_power);
-            br.setPower(br_power);
-
-            while (opModeIsActive() &&
-                    (l.isBusy() || r.isBusy() || bl.isBusy() || br.isBusy()) &&
-                    (runtime.seconds() < timeoutS)) {
-
-                // adjust angle from 0 > 360 to -180 to 180 so that 0 is straight ahead
-                int rawZ = g.getHeading() + offset;
-                int adjustedZ = 0;
-                if(rawZ > 180 + offset) {
-                    adjustedZ = rawZ - 360;
-                } else {
-                    adjustedZ = rawZ;
-                }
-
-                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l.getPower(), r.getPower(), bl.getPower(), br.getPower());
-                telemetry.addData("Gyro-raw",rawZ);
-                telemetry.addData("Gyro-adj",adjustedZ);
-
-                if(adjustedZ < rot + offset) {
-
-                    l.setPower(l.getPower() - correction);
-                    bl.setPower(bl.getPower() + correction);
-                    r.setPower(r.getPower() - correction);
-                    br.setPower(br.getPower() + correction);
-                    telemetry.addLine("Correcting for leftwards drift.");
-
-                }
-                if(adjustedZ > rot + offset) {
-
-                    l.setPower(l.getPower() + correction);
-                    bl.setPower(bl.getPower() - correction);
-                    r.setPower(r.getPower() + correction);
-                    br.setPower(br.getPower() - correction);
-                    telemetry.addLine("Correcting for rightwards drift.");
-
-                }
-                telemetry.update();
-                if (closeEnough((int) l_count, (int) r_count, (int) bl_count, (int) br_count)) {
-                    break;
-                }
-                sleep(320);
-
-            }
-            cancelMovement();
-        }
-    }
-
 
     void cancelMovement() {
 
@@ -272,6 +195,88 @@ public class StrafeToSkystonePID extends LinearOpMode {
 
     double map(double x, double min_a, double max_a, double min_b, double max_b) {
         return (x - min_a) / (max_a - min_a) * (max_b - min_b) + min_b;
+    }
+
+    public void gyroTurn (  double speed, double angle) {
+
+        // keep looping while we are still active, and not on heading.
+        while (opModeIsActive() && !onHeading(speed, angle, P_TURN_COEFF)) {
+            // Update telemetry & Allow time for other processes to run.
+            telemetry.update();
+        }
+    }
+
+    public void gyroHold( double speed, double angle, double holdTime) {
+
+        ElapsedTime holdTimer = new ElapsedTime();
+
+        // keep looping while we have time remaining.
+        holdTimer.reset();
+        while (opModeIsActive() && (holdTimer.time() < holdTime)) {
+            // Update telemetry & Allow time for other processes to run.
+            onHeading(speed, angle, P_TURN_COEFF);
+            telemetry.update();
+        }
+
+        // Stop all motion;
+        h.setPower(0);
+    }
+
+    boolean onHeading(double speed, double angle, double PCoeff) {
+        double   error ;
+        double   steer ;
+        boolean  onTarget = false ;
+        double leftSpeed;
+        double rightSpeed;
+
+        // determine turn power based on +/- error
+        error = getError(angle);
+
+        if (Math.abs(error) <= HEADING_THRESHOLD) {
+            steer = 0.0;
+            leftSpeed  = 0.0;
+            rightSpeed = 0.0;
+            onTarget = true;
+        }
+        else {
+            steer = getSteer(error, PCoeff);
+            rightSpeed  = speed * steer;
+            leftSpeed   = -rightSpeed;
+        }
+
+        // Send desired speeds to motors.
+        l.setPower(leftSpeed);
+        r.setPower(rightSpeed);
+        bl.setPower(leftSpeed);
+        br.setPower(rightSpeed);
+
+        // Display it for the driver.
+        telemetry.addData("Target", "%5.2f", angle);
+        telemetry.addData("Err/St", "%5.2f/%5.2f", error, steer);
+        telemetry.addData("Speed.", "%5.2f:%5.2f", leftSpeed, rightSpeed);
+
+        return onTarget;
+    }
+
+    /**
+     * getError determines the error between the target angle and the robot's current heading
+     * @param   targetAngle  Desired angle (relative to global reference established at last Gyro Reset).
+     * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
+     *          +ve error means the robot should turn LEFT (CCW) to reduce error.
+     */
+    public double getError(double targetAngle) {
+
+        double robotError;
+
+        // calculate error in -179 to +180 range  (
+        robotError = targetAngle - g.getIntegratedZValue();
+        while (robotError > 180)  robotError -= 360;
+        while (robotError <= -180) robotError += 360;
+        return robotError;
+    }
+
+    public double getSteer(double error, double PCoeff) {
+        return Range.clip(error * PCoeff, -1, 1);
     }
 
 

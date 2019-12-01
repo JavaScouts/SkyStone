@@ -98,7 +98,7 @@ public class StrafeToSkystone extends LinearOpMode {
         g.resetZAxisIntegrator();
 
         h.hookLeft.setPosition(0);
-        driveToPoint(0.35, 0, -40, 0, 10);
+        driveToPoint(0.45, 0, -40, 0, 10);
         sleep(200);
         driveToPoint(0.24, -500, 0, 0, 10, "detect-v3",1.1);
         sleep(200);
@@ -119,17 +119,16 @@ public class StrafeToSkystone extends LinearOpMode {
         driveToPoint(0.4,0,-15,0,10);
         sleep(500);
         sleep(100);
-        h.hookLeft.setPosition(0.6);
-        sleep(100);
-        h.hookLeft.setPosition(0);
+        h.hookLeft.setPosition(0.75);
         sleep(500);
-        driveToPoint(0.4,0,50,0,10);
+        driveToPoint(0.4,0,32,0,10);
+        h.hookLeft.setPosition(0);
+        sleep(100);
+        driveToPoint(0.4,-40,0,0,10);
+        sleep(100);
+        driveToPoint(0.4,0,20,0,10);
 
 
-    }
-
-    void servoToPoint(Servo servo, double pos) {
-        servo.setPosition(pos);
     }
 
     double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS) {
