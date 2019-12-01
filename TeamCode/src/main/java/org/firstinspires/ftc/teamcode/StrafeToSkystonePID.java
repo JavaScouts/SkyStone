@@ -87,13 +87,14 @@ public class StrafeToSkystonePID extends LinearOpMode {
         telemetry.clear(); telemetry.update();
         waitForStart();
 
-        pidDrive(0.5, -100,0, 10, 0.05);
+        pidDrive(0.5, -100,0, 10, 0.05,0);
         sleep(500);
-        pidDrive(0.5,100,0,10,0.05);
+        pidDrive(0.5,100,0,10,0.05, 0);
+
 
     }
 
-    void pidDrive(double powerLimit, double x, double rot, double timeoutS, double correction) {
+    void pidDrive(double powerLimit, double x, double rot, double timeoutS, double correction, int offset) {
 
         rot = 0;
         double y = 0;
@@ -129,10 +130,21 @@ public class StrafeToSkystonePID extends LinearOpMode {
                     (l.isBusy() || r.isBusy() || bl.isBusy() || br.isBusy()) &&
                     (runtime.seconds() < timeoutS)) {
 
-                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l.getPower(), r.getPower(), bl.getPower(), br.getPower());
-                telemetry.addData("Gyro",g.getHeading());
+                // adjust angle from 0 > 360 to -180 to 180 so that 0 is straight ahead
+                int rawZ = g.getHeading() +offset;
+                int adjustedZ = 0;
+                if(rawZ > 180 + offset) {
+                    adjustedZ = rawZ - 360;
+                } else {
+                    adjustedZ = rawZ;
+                }
 
-                if(g.getHeading() < rot) {
+
+                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l.getPower(), r.getPower(), bl.getPower(), br.getPower());
+                telemetry.addData("Gyro-raw",rawZ);
+                telemetry.addData("Gyro-adj",adjustedZ);
+
+                if(adjustedZ < rot) {
 
                     l.setPower(l.getPower() + correction);
                     bl.setPower(bl.getPower() + correction);
@@ -141,7 +153,7 @@ public class StrafeToSkystonePID extends LinearOpMode {
                     telemetry.addLine("Correcting for leftwards drift.");
 
                 }
-                if(g.getHeading() > rot) {
+                if(adjustedZ > rot) {
 
                     l.setPower(l.getPower() - correction);
                     bl.setPower(bl.getPower() - correction);
@@ -154,7 +166,7 @@ public class StrafeToSkystonePID extends LinearOpMode {
                 if (closeEnough((int) l_count, (int) r_count, (int) bl_count, (int) br_count)) {
                     break;
                 }
-                sleep(320);
+                sleep(75);
 
             }
             cancelMovement();
@@ -162,7 +174,7 @@ public class StrafeToSkystonePID extends LinearOpMode {
     }
 
 
-    void pidStrafe(double powerLimit, double y, double rot, double timeoutS, double correction) {
+    void pidStrafe(double powerLimit, double y, double rot, double timeoutS, double correction, int offset) {
 
         rot = 0;
         double x = 0;
@@ -198,10 +210,20 @@ public class StrafeToSkystonePID extends LinearOpMode {
                     (l.isBusy() || r.isBusy() || bl.isBusy() || br.isBusy()) &&
                     (runtime.seconds() < timeoutS)) {
 
-                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l.getPower(), r.getPower(), bl.getPower(), br.getPower());
-                telemetry.addData("Gyro",g.getHeading());
+                // adjust angle from 0 > 360 to -180 to 180 so that 0 is straight ahead
+                int rawZ = g.getHeading() + offset;
+                int adjustedZ = 0;
+                if(rawZ > 180 + offset) {
+                    adjustedZ = rawZ - 360;
+                } else {
+                    adjustedZ = rawZ;
+                }
 
-                if(g.getHeading() < rot) {
+                telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l.getPower(), r.getPower(), bl.getPower(), br.getPower());
+                telemetry.addData("Gyro-raw",rawZ);
+                telemetry.addData("Gyro-adj",adjustedZ);
+
+                if(adjustedZ < rot + offset) {
 
                     l.setPower(l.getPower() - correction);
                     bl.setPower(bl.getPower() + correction);
@@ -210,7 +232,7 @@ public class StrafeToSkystonePID extends LinearOpMode {
                     telemetry.addLine("Correcting for leftwards drift.");
 
                 }
-                if(g.getHeading() > rot) {
+                if(adjustedZ > rot + offset) {
 
                     l.setPower(l.getPower() + correction);
                     bl.setPower(bl.getPower() - correction);
@@ -252,22 +274,5 @@ public class StrafeToSkystonePID extends LinearOpMode {
         return (x - min_a) / (max_a - min_a) * (max_b - min_b) + min_b;
     }
 
-    void setupVision() {
-
-        WebcamName webcamName = null;
-        webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
-
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraName = webcamName;
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        trackables = this.vuforia.loadTrackablesFromAsset("Skystone");
-        trackable = trackables.get(0);
-        trackable.setName("Skystone Target"); // can help in debugging; otherwise not necessary
-
-    }
 
 }
