@@ -33,6 +33,10 @@ public class NewTeleOp extends LinearOpMode {
     @Override
     public void runOpMode() {
 
+        boolean lastResetState = false;
+        boolean curResetState  = false;
+        boolean lastResetState2 = false;
+        boolean curResetState2  = false;
         robot.init(hardwareMap, this);
 
         Collec1 = hardwareMap.dcMotor.get("c1");
@@ -44,6 +48,7 @@ public class NewTeleOp extends LinearOpMode {
         Collec1.setDirection(DcMotorSimple.Direction.REVERSE);
         Collec2.setDirection(DcMotorSimple.Direction.FORWARD);
         Rev = hardwareMap.dcMotor.get("rev");
+        Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         waitForStart();
 
@@ -94,31 +99,86 @@ public class NewTeleOp extends LinearOpMode {
                 robot.rightDrive.setPower(-power);
 
             }
+            /*
             if (gamepad2.x){
-                small.setPosition(0);
+                small.setPosition(0.1);
             } else if (gamepad2.b){
                 small.setPosition(0.75);
             }
             if (gamepad2.y){
                 big.setPosition(0);
             } else if (gamepad2.a){
-                big.setPosition(1.0);
+                big.setPosition(0.6);
             }
-            if (gamepad2.left_bumper){
-                robot.hookLeft.setPosition(0);
-            } else if (gamepad2.right_bumper){
-                robot.hookLeft.setPosition(0.7);
+            */
+
+            telemetry.addLine("Press a to go to ready position.");
+            telemetry.addLine("Press x to grab, raise, and rotate.");
+            telemetry.addLine("Press b to release, rotate, and lower.");
+            telemetry.addLine("Press dpad_up to go up one block.");
+            telemetry.addLine("Press dpad_down to go down one block.");
+            telemetry.addLine("Hold left_bumper to hold in position");
+
+            if(gamepad2.a) {
+
+                big.setPosition(0);
+                sleep(50);
+                small.setPosition(0.1);
+
             }
 
-            Collec1.setPower(gamepad2.left_stick_y);
-            Collec2.setPower(gamepad2.left_stick_y);
-            Rev.setPower(gamepad2.right_stick_y);
+            if(gamepad2.x) {
 
+                small.setPosition(0.75);
+                sleep(100);
+                moveUpOne();
+                sleep(100);
+                big.setPosition(0.6);
+
+            }
+
+            if(gamepad2.b) {
+
+                small.setPosition(0.1);
+                sleep(100);
+                big.setPosition(0);
+                sleep(100);
+                moveDownOne();
+
+            }
+
+            curResetState = (gamepad2.dpad_down);
+            if (curResetState && !lastResetState) {
+                moveDownOne();
+            }
+            lastResetState = curResetState;
+
+
+            curResetState2 = (gamepad2.dpad_up);
+            if (curResetState2 && !lastResetState2) {
+                moveUpOne();
+            }
+            lastResetState2 = curResetState2;
+
+            double collecPowe = gamepad2.left_stick_y;
+            Collec1.setPower(collecPowe);
+            Collec2.setPower(collecPowe);
+
+            if (gamepad2.left_bumper) {
+
+                Rev.setPower(gamepad2.right_stick_y-0.05);
+
+            } else {
+
+                Rev.setPower(gamepad2.right_stick_y);
+
+            }
 
             telemetry.addData("fl", robot.leftDrive.getCurrentPosition());
             telemetry.addData("fr", robot.rightDrive.getCurrentPosition());
             telemetry.addData("bl", robot.backLDrive.getCurrentPosition());
             telemetry.addData("br", robot.backRDrive.getCurrentPosition());
+            telemetry.addData("lift", Rev.getCurrentPosition());
             telemetry.addData("z", robot.gyro.getHeading());
 
             telemetry.update();
@@ -126,6 +186,32 @@ public class NewTeleOp extends LinearOpMode {
 
     }
 
+    void moveUpOne() {
+
+        Rev.setTargetPosition(Rev.getCurrentPosition()-500);
+        Rev.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        Rev.setPower(0.5);
+        while(Rev.isBusy() && opModeIsActive()) {
+            idle();
+        }
+        Rev.setPower(0);
+        Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+    }
+
+    void moveDownOne() {
+
+        Rev.setTargetPosition(Rev.getCurrentPosition()+500);
+        Rev.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        Rev.setPower(0.5);
+        while(Rev.isBusy() && opModeIsActive()) {
+            idle();
+        }
+        sleep(50);
+        Rev.setPower(0);
+        Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+    }
 }
 
 

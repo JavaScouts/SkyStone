@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -42,6 +43,9 @@ public class StrafeToSkystone extends LinearOpMode {
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
     private static final double WHEEL_DIAMETER_INCHES = 2.95;
     private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
+    static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
+    static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
+    static final double     SLOWDOWN                = 0.2;
     private static final double PI = 3.1415;
     private double scale2 = 2.35;
     private double scale3 = 0.1;
@@ -84,7 +88,7 @@ public class StrafeToSkystone extends LinearOpMode {
         while (!isStopRequested() && g.isCalibrating())  {
             telemetry.addData("calibrating", "%s", Math.round(runtime.seconds())%2==0 ? "|.." : "..|");
             telemetry.update();
-            sleep(50);
+            sleep(10);
         }
 
         telemetry.log().clear(); telemetry.log().add("Gyro Calibrated. Press Start.");
@@ -98,38 +102,43 @@ public class StrafeToSkystone extends LinearOpMode {
         g.resetZAxisIntegrator();
 
         h.hookLeft.setPosition(0);
-        driveToPoint(0.45, 0, -40, 0, 10);
-        sleep(200);
-        driveToPoint(0.24, -500, 0, 0, 10, "detect-v3",1.1);
-        sleep(200);
-        driveToPoint(0.23, 9, 0, 0, 10);
-        sleep(100);
-        driveToPoint(0.4, 0, 0, PI / 4, 10);
-        sleep(100);
-        driveToPoint(0.25, -17, 0, 0, 10, "collect");
-        sleep(250);
-        driveToPoint(0.3, 17, 0, 0, 10, "collect");
-        sleep(100);
-        driveToPoint(0.4, 0, 0, -PI / 4, 10);
-        sleep(100);
-        driveToPoint(0.3, 0, 8, 0, 10);
-        sleep(100);
-        driveToPoint(0.3, 1000, 0, 0, 10, "range-1", 20);
-        sleep(100);
-        driveToPoint(0.4,0,-15,0,10);
-        sleep(500);
-        sleep(100);
+        driveToPoint(0.51, 0, -43, 0, 10);
+        gyroTurn(0.51,0);
+        sleep(50);
+        driveToPoint(0.41, -500, 0, 0, 10, "detect-v3",1.1);
+        sleep(50);
+        driveToPoint(0.6, 9, 0, 0, 10);
+        sleep(10);
+        driveToPoint(0.5, 0, 0, PI / 4, 10);
+        sleep(10);
+        driveToPoint(0.45, -17, 0, 0, 10, "collect");
+        sleep(40);
+        driveToPoint(0.45, 17, 0, 0, 10, "collect");
+        sleep(50);
+        driveToPoint(0.5, 0, 0, -PI / 4, 10);
+        sleep(50);
+        driveToPoint(0.6, 0, 12, 0, 10);
+        gyroTurn(0.5,0);
+        sleep(50);
+        driveToPoint(0.7, 1000, 0, 0, 10, "range-1", 20);
+        sleep(50);
+        driveToPoint(0.7,0,-6,0,10);
+        gyroTurn(0.5,0);
+        sleep(10);
         h.hookLeft.setPosition(0.75);
-        sleep(500);
-        driveToPoint(0.4,0,32,0,10);
+        sleep(400);
+        driveToPoint(0.7,0,50,0,10);
+        gyroTurn(0.5,0);
         h.hookLeft.setPosition(0);
-        sleep(100);
-        driveToPoint(0.4,-40,0,0,10);
-        sleep(100);
-        driveToPoint(0.4,0,20,0,10);
+        sleep(50);
+        driveToPoint(0.5,-22,0,0,10);
+        sleep(50);
+        driveToPoint(0.6,0,-20,0,10);
+        gyroTurn(0.5,0);
 
 
     }
+
 
     double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS) {
 
@@ -147,6 +156,8 @@ public class StrafeToSkystone extends LinearOpMode {
     double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS, String command, double params) {
 
         if (opModeIsActive()) {
+
+            powerLimit -= SLOWDOWN;
 
             double reciprocal_radius = 1 / WHEEL_RADIUS;
             double lr = reciprocal_radius * (x - y - (rot * (2 * CENTER_TO_WHEEL)));
@@ -353,10 +364,10 @@ public class StrafeToSkystone extends LinearOpMode {
 
     boolean closeEnough(int l_target, int r_target, int bl_target, int br_target) {
 
-        return  (l_target-30<=l.getCurrentPosition() && l.getCurrentPosition()<=l_target+30) &&
-                (r_target-30<=r.getCurrentPosition() && r.getCurrentPosition()<=r_target+30) &&
-                (bl_target-30<=bl.getCurrentPosition() && bl.getCurrentPosition()<=bl_target+30) &&
-                (br_target-30<=br.getCurrentPosition() && br.getCurrentPosition()<=br_target+30);
+        return  (l_target-50<=l.getCurrentPosition() && l.getCurrentPosition()<=l_target+50) &&
+                (r_target-50<=r.getCurrentPosition() && r.getCurrentPosition()<=r_target+50) &&
+                (bl_target-50<=bl.getCurrentPosition() && bl.getCurrentPosition()<=bl_target+50) &&
+                (br_target-50<=br.getCurrentPosition() && br.getCurrentPosition()<=br_target+50);
 
     }
 
@@ -380,6 +391,88 @@ public class StrafeToSkystone extends LinearOpMode {
         trackable = trackables.get(0);
         trackable.setName("Skystone Target"); // can help in debugging; otherwise not necessary
 
+    }
+
+    public void gyroTurn (  double speed, double angle) {
+
+        // keep looping while we are still active, and not on heading.
+        while (opModeIsActive() && !onHeading(speed, angle, P_TURN_COEFF)) {
+            // Update telemetry & Allow time for other processes to run.
+            telemetry.update();
+        }
+    }
+
+    public void gyroHold( double speed, double angle, double holdTime) {
+
+        ElapsedTime holdTimer = new ElapsedTime();
+
+        // keep looping while we have time remaining.
+        holdTimer.reset();
+        while (opModeIsActive() && (holdTimer.time() < holdTime)) {
+            // Update telemetry & Allow time for other processes to run.
+            onHeading(speed, angle, P_TURN_COEFF);
+            telemetry.update();
+        }
+
+        // Stop all motion;
+        h.setPower(0);
+    }
+
+    boolean onHeading(double speed, double angle, double PCoeff) {
+        double   error ;
+        double   steer ;
+        boolean  onTarget = false ;
+        double leftSpeed;
+        double rightSpeed;
+
+        // determine turn power based on +/- error
+        error = getError(angle);
+
+        if (Math.abs(error) <= HEADING_THRESHOLD) {
+            steer = 0.0;
+            leftSpeed  = 0.0;
+            rightSpeed = 0.0;
+            onTarget = true;
+        }
+        else {
+            steer = getSteer(error, PCoeff);
+            rightSpeed  = speed * steer;
+            leftSpeed   = -rightSpeed;
+        }
+
+        // Send desired speeds to motors.
+        l.setPower(leftSpeed);
+        r.setPower(rightSpeed);
+        bl.setPower(leftSpeed);
+        br.setPower(rightSpeed);
+
+        // Display it for the driver.
+        telemetry.addData("Target", "%5.2f", angle);
+        telemetry.addData("Err/St", "%5.2f/%5.2f", error, steer);
+        telemetry.addData("Speed.", "%5.2f:%5.2f", leftSpeed, rightSpeed);
+
+        return onTarget;
+    }
+
+    /**
+     * getError determines the error between the target angle and the robot's current heading
+     * @param   targetAngle  Desired angle (relative to global reference established at last Gyro Reset).
+     * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
+     *          +ve error means the robot should turn LEFT (CCW) to reduce error.
+     */
+    public double getError(double targetAngle) {
+
+        double robotError;
+
+        // calculate error in -179 to +180 range  (
+        robotError = targetAngle - g.getIntegratedZValue();
+        while (robotError > 180)  robotError -= 360;
+        while (robotError <= -180) robotError += 360;
+        return robotError;
+    }
+
+    public double getSteer(double error, double PCoeff) {
+        return Range.clip(error * PCoeff, -1, 1);
     }
 
 }

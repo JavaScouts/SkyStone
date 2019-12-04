@@ -90,9 +90,9 @@ public class StrafeToSkystonePID extends LinearOpMode {
         telemetry.clear(); telemetry.update();
         waitForStart();
 
-        pidDrive(0.5, -100,0,0, 10, 0.02,0);
+        pidDrive(0.5, -100,0,0, 10, 0.001,0);
         sleep(500);
-        pidDrive(0.5,0,100,0,10,0.03, 0);
+        pidDrive(0.5,0,-100,0,10,0.001, 0);
         sleep(500);
         gyroTurn(0.5,90);
 
@@ -169,7 +169,6 @@ public class StrafeToSkystonePID extends LinearOpMode {
                 if (closeEnough((int) l_count, (int) r_count, (int) bl_count, (int) br_count)) {
                     break;
                 }
-                sleep(15);
 
             }
             cancelMovement();
