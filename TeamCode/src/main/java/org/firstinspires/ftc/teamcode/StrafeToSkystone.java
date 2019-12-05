@@ -45,7 +45,7 @@ public class StrafeToSkystone extends LinearOpMode {
     private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
     static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
-    static final double     SLOWDOWN                = 0.2;
+    static final double     SLOWDOWN                = 0.12;
     private static final double PI = 3.1415;
     private double scale2 = 2.35;
     private double scale3 = 0.1;
@@ -98,40 +98,59 @@ public class StrafeToSkystone extends LinearOpMode {
             telemetry.addData(">", "Robot Heading = %d", g.getIntegratedZValue());
             telemetry.update();
         }
+        telemetry.log().clear();
 
         g.resetZAxisIntegrator();
 
         h.hookLeft.setPosition(0);
-        driveToPoint(0.51, 0, -43, 0, 10);
+        driveToPoint(0.51, 0, -42.2, 0, 10);
         gyroTurn(0.51,0);
         sleep(50);
-        driveToPoint(0.41, -500, 0, 0, 10, "detect-v3",1.1);
-        sleep(50);
-        driveToPoint(0.6, 9, 0, 0, 10);
-        sleep(10);
-        driveToPoint(0.5, 0, 0, PI / 4, 10);
-        sleep(10);
-        driveToPoint(0.45, -17, 0, 0, 10, "collect");
-        sleep(40);
-        driveToPoint(0.45, 17, 0, 0, 10, "collect");
-        sleep(50);
-        driveToPoint(0.5, 0, 0, -PI / 4, 10);
-        sleep(50);
-        driveToPoint(0.6, 0, 12, 0, 10);
-        gyroTurn(0.5,0);
-        sleep(50);
+        if (driveToPoint(0.44, -500, 0, 0, 10, "detect-v3",0.1) < 0.38) {
+
+            sleep(50);
+            driveToPoint(0.6, 9, 0, 0, 10);
+            sleep(10);
+            driveToPoint(0.5, 0, 0, PI / 4, 10);
+            sleep(10);
+            driveToPoint(0.45, -17, 0, 0, 10, "collect");
+            sleep(40);
+            driveToPoint(0.45, 17, 0, 0, 10, "collect");
+            sleep(50);
+            driveToPoint(0.5, 0, 0, -PI / 4, 10);
+            sleep(50);
+            driveToPoint(0.6, 0, 12, 0, 10);
+            gyroTurn(0.5,0);
+            sleep(50);
+
+        } else {
+
+            sleep(50);
+            driveToPoint(0.6, 12, 0, 0, 10);
+            sleep(10);
+            driveToPoint(0.6,0,-13,0,10);
+            sleep(5);
+            driveToPoint(0.6,-10,0,0,10,"collect");
+            sleep(5);
+            driveToPoint(0.6,10,0,0,10,"collect");
+            sleep(10);
+            driveToPoint(0.7,0,26,0,10);
+            gyroTurn(0.5,0);
+            sleep(50);
+
+        }
         driveToPoint(0.7, 1000, 0, 0, 10, "range-1", 20);
         sleep(50);
-        driveToPoint(0.7,0,-6,0,10);
+        driveToPoint(0.7,0,-10,0,10);
         gyroTurn(0.5,0);
         sleep(10);
         h.hookLeft.setPosition(0.75);
         sleep(400);
-        driveToPoint(0.7,0,50,0,10);
+        driveToPoint(0.7,0,100,0,10,"correct",0);
         gyroTurn(0.5,0);
         h.hookLeft.setPosition(0);
         sleep(50);
-        driveToPoint(0.5,-22,0,0,10);
+        driveToPoint(0.5,-44,0,0,10);
         sleep(50);
         driveToPoint(0.6,0,-20,0,10);
         gyroTurn(0.5,0);
@@ -154,6 +173,8 @@ public class StrafeToSkystone extends LinearOpMode {
 
 
     double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS, String command, double params) {
+
+        double error, steer, max, leftSpeed, rightSpeed;
 
         if (opModeIsActive()) {
 
@@ -234,8 +255,9 @@ public class StrafeToSkystone extends LinearOpMode {
                         }
                         if (c.red() == 0 && runtime.seconds() > delay) {
                             telemetry.addData("Facing", "Skystone");
+                            telemetry.log().add(runtime.seconds() + " seconds have elapsed.");
                             cancelMovement();
-                            return 0;
+                            return runtime.seconds();
                         }
                         break;
 
@@ -258,6 +280,39 @@ public class StrafeToSkystone extends LinearOpMode {
                             telemetry.addData("Range:", dist);
                         }
                         break;
+                    case "correct":
+                        double angle = 0;
+                        if (params != 0) {
+                            angle = params;
+                        }
+                        // adjust relative speed based on heading error.
+                        error = getError(angle);
+                        steer = getSteer(error, 0.15);
+
+                        // if driving in reverse, the motor correction also needs to be reversed
+                        if (y < 0) {
+                            steer *= -1.0;
+                        }
+
+                        leftSpeed = powerLimit - steer;
+                        rightSpeed = powerLimit + steer;
+
+                        // Normalize speeds if either one exceeds +/- 1.0;
+                        max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
+                        if (max > 1.0)
+                        {
+                            leftSpeed /= max;
+                            rightSpeed /= max;
+                        }
+
+                        l.setPower(leftSpeed);
+                        bl.setPower(leftSpeed);
+                        r.setPower(rightSpeed);
+                        br.setPower(rightSpeed);
+
+                        // Display drive status for the driver.
+                        telemetry.addData("Err/St",  "%5.1f/%5.1f",  error, steer);
+                        break;
 
                     default:
                         telemetry.addLine("we goin folks");
@@ -267,16 +322,6 @@ public class StrafeToSkystone extends LinearOpMode {
                 if (closeEnough((int) l_count, (int) r_count, (int) bl_count, (int) br_count)) {
                     break;
                 }
-            }
-
-            if (command.equals("correct")) {
-                int cur = g.getHeading();
-                double curRad = Math.toRadians(cur);
-                double err = rot - curRad;
-                //driveToPoint(powerLimit,0,0,err,10,"");
-                telemetry.addData("cur", curRad);
-                telemetry.addData("tar", rot);
-                telemetry.update();
             }
 
             cancelMovement();

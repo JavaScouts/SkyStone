@@ -91,10 +91,10 @@ public class StrafeToSkystonePID extends LinearOpMode {
         waitForStart();
 
         pidDrive(0.5, -100,0,0, 10, 0.001,0);
-        sleep(500);
+        sleep(100);
+        gyroTurn(0.5,0);
         pidDrive(0.5,0,-100,0,10,0.001, 0);
         sleep(500);
-        gyroTurn(0.5,90);
 
     }
 

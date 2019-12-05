@@ -130,9 +130,9 @@ public class NewTeleOp extends LinearOpMode {
             if(gamepad2.x) {
 
                 small.setPosition(0.75);
-                sleep(100);
+                sleep(425);
                 moveUpOne();
-                sleep(100);
+                sleep(20);
                 big.setPosition(0.6);
 
             }
@@ -140,10 +140,13 @@ public class NewTeleOp extends LinearOpMode {
             if(gamepad2.b) {
 
                 small.setPosition(0.1);
-                sleep(100);
+                sleep(250);
                 big.setPosition(0);
-                sleep(100);
+                small.setPosition(0.75);
+                sleep(400);
                 moveDownOne();
+                sleep(20);
+                small.setPosition(0.1);
 
             }
 
@@ -159,20 +162,11 @@ public class NewTeleOp extends LinearOpMode {
                 moveUpOne();
             }
             lastResetState2 = curResetState2;
+            Rev.setPower(-0.05);
 
             double collecPowe = gamepad2.left_stick_y;
             Collec1.setPower(collecPowe);
             Collec2.setPower(collecPowe);
-
-            if (gamepad2.left_bumper) {
-
-                Rev.setPower(gamepad2.right_stick_y-0.05);
-
-            } else {
-
-                Rev.setPower(gamepad2.right_stick_y);
-
-            }
 
             telemetry.addData("fl", robot.leftDrive.getCurrentPosition());
             telemetry.addData("fr", robot.rightDrive.getCurrentPosition());
@@ -194,7 +188,7 @@ public class NewTeleOp extends LinearOpMode {
         while(Rev.isBusy() && opModeIsActive()) {
             idle();
         }
-        Rev.setPower(0);
+        Rev.setPower(-0.05);
         Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
@@ -208,7 +202,7 @@ public class NewTeleOp extends LinearOpMode {
             idle();
         }
         sleep(50);
-        Rev.setPower(0);
+        Rev.setPower(-0.05);
         Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
