@@ -1,37 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.content.Context;
-
-import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
-import java.util.ArrayList;
-import java.util.List;
 
-@Autonomous(name="Find Skystone")
-public class StrafeToSkystone extends LinearOpMode {
+public abstract class BaseAutonomous extends LinearOpMode {
 
     private ModernRoboticsI2cGyro g;
     private ModernRoboticsI2cColorSensor c;
@@ -43,9 +23,9 @@ public class StrafeToSkystone extends LinearOpMode {
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
     private static final double WHEEL_DIAMETER_INCHES = 2.95;
     private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
-    static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
-    static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
-    static final double     SLOWDOWN                = 0.12;
+    static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
+    static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
+    static final double SLOWDOWN = 0.12;
     private static final double PI = 3.1415;
     private double scale2 = 2.35;
     private double scale3 = 0.1;
@@ -54,15 +34,17 @@ public class StrafeToSkystone extends LinearOpMode {
     private Vision v = new Vision();
     private ElapsedTime runtime = new ElapsedTime();
 
-    private VuforiaLocalizer vuforia;
-    private VuforiaTrackables trackables;
-
-    private static final String VUFORIA_KEY =
-            "AdQfAyr/////AAABmUh6Z5KT20+RoULUpgxmoc9nIV2FKHL5EaGvj3PPgHtOujprWlIvVPgxtFaYImMYo175bgHUe+tHxxYynQmrgtrPcCBOIgpyptC6DCkr4lG4jZ59rDYEVPh+IUNKMWOgtphivaS+ZSclNCN2+uE40/oqQ0HuRLAGcxe/UviDbt6IafV2RkFFs412uP1E5XL/66hm46TahtlARJNQsKMTrxCNa8OFwvzC9ZW/ryimTGl46MdL9L6oI8JLHGm7GB7y7GS9GtqasKZvhgP4QCNgKHUDiC6urJ2BML9DO34qRY9zEELLG1fi92G4tB7P/0BsREjvNs28UNrXYrldXaJkAIK3pK2NJHNWFUuy1h7mgd+x";
-    private VuforiaTrackable trackable;
 
     @Override
     public void runOpMode() {
+
+        before_start();
+        awaiting_start();
+        after_start();
+
+    }
+
+    private void before_start() {
 
         h.init(hardwareMap, this);
         //setupVision();
@@ -85,14 +67,19 @@ public class StrafeToSkystone extends LinearOpMode {
 
         // Wait until the gyro calibration is complete
         runtime.reset();
-        while (!isStopRequested() && g.isCalibrating())  {
-            telemetry.addData("calibrating", "%s", Math.round(runtime.seconds())%2==0 ? "|.." : "..|");
+        while (!isStopRequested() && g.isCalibrating()) {
+            telemetry.addData("calibrating", "%s", Math.round(runtime.seconds()) % 2 == 0 ? "|.." : "..|");
             telemetry.update();
             sleep(10);
         }
 
-        telemetry.log().clear(); telemetry.log().add("Gyro Calibrated. Press Start.");
+        telemetry.log().clear();
+        telemetry.log().add("Gyro Calibrated. Press Start.");
         telemetry.clear();
+
+    }
+
+    private void awaiting_start() {
 
         while (!isStarted()) {
             telemetry.addData(">", "Robot Heading = %d", g.getIntegratedZValue());
@@ -102,62 +89,18 @@ public class StrafeToSkystone extends LinearOpMode {
 
         g.resetZAxisIntegrator();
 
-        h.hookLeft.setPosition(0);
-        driveToPoint(0.51, 0, -42.2, 0, 10);
-        gyroTurn(0.51,0);
-        sleep(50);
-        if (driveToPoint(0.44, -500, 0, 0, 10, "detect-v3",0.1) < 0.38) {
-
-            sleep(50);
-            driveToPoint(0.6, 9, 0, 0, 10);
-            sleep(10);
-            driveToPoint(0.5, 0, 0, PI / 4, 10);
-            sleep(10);
-            driveToPoint(0.45, -17, 0, 0, 10, "collect");
-            sleep(40);
-            driveToPoint(0.45, 17, 0, 0, 10, "collect");
-            sleep(50);
-            driveToPoint(0.5, 0, 0, -PI / 4, 10);
-            sleep(50);
-            driveToPoint(0.6, 0, 12, 0, 10);
-            gyroTurn(0.5,0);
-            sleep(50);
-
-        } else {
-
-            sleep(50);
-            driveToPoint(0.6, 12, 0, 0, 10);
-            sleep(10);
-            driveToPoint(0.6,0,-13,0,10);
-            sleep(5);
-            driveToPoint(0.6,-10,0,0,10,"collect");
-            sleep(5);
-            driveToPoint(0.6,10,0,0,10,"collect");
-            sleep(10);
-            driveToPoint(0.7,0,26,0,10);
-            gyroTurn(0.5,0);
-            sleep(50);
-
-        }
-        driveToPoint(0.7, 1000, 0, 0, 10, "range-1", 20);
-        sleep(50);
-        driveToPoint(0.7,0,-10,0,10);
-        gyroTurn(0.5,0);
-        sleep(10);
-        h.hookLeft.setPosition(0.75);
-        sleep(400);
-        driveToPoint(0.7,0,100,0,10,"correct",0);
-        gyroTurn(0.5,0);
-        h.hookLeft.setPosition(0);
-        sleep(50);
-        driveToPoint(0.5,-44,0,0,10);
-        sleep(50);
-        driveToPoint(0.6,0,-20,0,10);
-        gyroTurn(0.5,0);
-
-
     }
 
+    public abstract void after_start();
+
+
+    public void hook_up() {
+        h.hookLeft.setPosition(0);
+    }
+
+    public void hook_down() {
+        h.hookLeft.setPosition(0.75);
+    }
 
     double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS) {
 
@@ -215,7 +158,7 @@ public class StrafeToSkystone extends LinearOpMode {
 
                 switch (command) {
                     case "detect-v1":
-                        Recognition sky = v.getFirstSkystoneSeen();
+                        /*Recognition sky = v.getFirstSkystoneSeen();
 
                         if (sky != null) {
                             telemetry.addData("skystone found", sky.getLeft());
@@ -225,10 +168,10 @@ public class StrafeToSkystone extends LinearOpMode {
                                 cancelMovement();
                                 return 0;
                             }
-                        }
+                        }*/
                         break;
                     case "detect-v2":
-                        OpenGLMatrix pose = ((VuforiaTrackableDefaultListener) trackable.getListener()).getFtcCameraFromTarget();
+                        /*OpenGLMatrix pose = ((VuforiaTrackableDefaultListener) trackable.getListener()).getFtcCameraFromTarget();
                         if (pose != null) {
                             telemetry.addData("Pose", v.format(pose));
                             Orientation angles = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
@@ -239,7 +182,7 @@ public class StrafeToSkystone extends LinearOpMode {
                         } else {
                             telemetry.addLine("No skystone found.");
                         }
-                        break;
+                        */break;
                     case "detect-v3":
                         double delay = 1.1;
                         if (params != 0) {
@@ -299,8 +242,7 @@ public class StrafeToSkystone extends LinearOpMode {
 
                         // Normalize speeds if either one exceeds +/- 1.0;
                         max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
-                        if (max > 1.0)
-                        {
+                        if (max > 1.0) {
                             leftSpeed /= max;
                             rightSpeed /= max;
                         }
@@ -311,7 +253,7 @@ public class StrafeToSkystone extends LinearOpMode {
                         br.setPower(rightSpeed);
 
                         // Display drive status for the driver.
-                        telemetry.addData("Err/St",  "%5.1f/%5.1f",  error, steer);
+                        telemetry.addData("Err/St", "%5.1f/%5.1f", error, steer);
                         break;
 
                     default:
@@ -369,9 +311,9 @@ public class StrafeToSkystone extends LinearOpMode {
                     (runtime.seconds() < timeoutS)) {
 
                 telemetry.addData("Powers", "Powers are %7f :%7f :%7f :%7f", l_power, r_power, bl_power, br_power);
-                telemetry.addData("Gyro",g.getIntegratedZValue());
+                telemetry.addData("Gyro", g.getIntegratedZValue());
 
-                if(g.getIntegratedZValue() < rot) {
+                if (g.getIntegratedZValue() < rot) {
 
                     l.setPower(l.getPower() + correction);
                     bl.setPower(bl.getPower() + correction);
@@ -380,7 +322,7 @@ public class StrafeToSkystone extends LinearOpMode {
                     telemetry.addLine("Correcting for leftwards drift.");
 
                 }
-                if(g.getIntegratedZValue() > rot) {
+                if (g.getIntegratedZValue() > rot) {
 
                     l.setPower(l.getPower() - correction);
                     bl.setPower(bl.getPower() - correction);
@@ -409,10 +351,10 @@ public class StrafeToSkystone extends LinearOpMode {
 
     boolean closeEnough(int l_target, int r_target, int bl_target, int br_target) {
 
-        return  (l_target-50<=l.getCurrentPosition() && l.getCurrentPosition()<=l_target+50) &&
-                (r_target-50<=r.getCurrentPosition() && r.getCurrentPosition()<=r_target+50) &&
-                (bl_target-50<=bl.getCurrentPosition() && bl.getCurrentPosition()<=bl_target+50) &&
-                (br_target-50<=br.getCurrentPosition() && br.getCurrentPosition()<=br_target+50);
+        return (l_target - 50 <= l.getCurrentPosition() && l.getCurrentPosition() <= l_target + 50) &&
+                (r_target - 50 <= r.getCurrentPosition() && r.getCurrentPosition() <= r_target + 50) &&
+                (bl_target - 50 <= bl.getCurrentPosition() && bl.getCurrentPosition() <= bl_target + 50) &&
+                (br_target - 50 <= br.getCurrentPosition() && br.getCurrentPosition() <= br_target + 50);
 
     }
 
@@ -420,7 +362,7 @@ public class StrafeToSkystone extends LinearOpMode {
         return (x - min_a) / (max_a - min_a) * (max_b - min_b) + min_b;
     }
 
-    void setupVision() {
+    /*void setupVision() {
 
         WebcamName webcamName = null;
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -436,9 +378,9 @@ public class StrafeToSkystone extends LinearOpMode {
         trackable = trackables.get(0);
         trackable.setName("Skystone Target"); // can help in debugging; otherwise not necessary
 
-    }
+    }*/
 
-    public void gyroTurn (  double speed, double angle) {
+    public void gyroTurn(double speed, double angle) {
 
         // keep looping while we are still active, and not on heading.
         while (opModeIsActive() && !onHeading(speed, angle, P_TURN_COEFF)) {
@@ -447,7 +389,7 @@ public class StrafeToSkystone extends LinearOpMode {
         }
     }
 
-    public void gyroHold( double speed, double angle, double holdTime) {
+    public void gyroHold(double speed, double angle, double holdTime) {
 
         ElapsedTime holdTimer = new ElapsedTime();
 
@@ -464,9 +406,9 @@ public class StrafeToSkystone extends LinearOpMode {
     }
 
     boolean onHeading(double speed, double angle, double PCoeff) {
-        double   error ;
-        double   steer ;
-        boolean  onTarget = false ;
+        double error;
+        double steer;
+        boolean onTarget = false;
         double leftSpeed;
         double rightSpeed;
 
@@ -475,14 +417,13 @@ public class StrafeToSkystone extends LinearOpMode {
 
         if (Math.abs(error) <= HEADING_THRESHOLD) {
             steer = 0.0;
-            leftSpeed  = 0.0;
+            leftSpeed = 0.0;
             rightSpeed = 0.0;
             onTarget = true;
-        }
-        else {
+        } else {
             steer = getSteer(error, PCoeff);
-            rightSpeed  = speed * steer;
-            leftSpeed   = -rightSpeed;
+            rightSpeed = speed * steer;
+            leftSpeed = -rightSpeed;
         }
 
         // Send desired speeds to motors.
@@ -501,9 +442,10 @@ public class StrafeToSkystone extends LinearOpMode {
 
     /**
      * getError determines the error between the target angle and the robot's current heading
-     * @param   targetAngle  Desired angle (relative to global reference established at last Gyro Reset).
-     * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
-     *          +ve error means the robot should turn LEFT (CCW) to reduce error.
+     *
+     * @param targetAngle Desired angle (relative to global reference established at last Gyro Reset).
+     * @return error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
+     * +ve error means the robot should turn LEFT (CCW) to reduce error.
      */
     public double getError(double targetAngle) {
 
@@ -511,7 +453,7 @@ public class StrafeToSkystone extends LinearOpMode {
 
         // calculate error in -179 to +180 range  (
         robotError = targetAngle - g.getIntegratedZValue();
-        while (robotError > 180)  robotError -= 360;
+        while (robotError > 180) robotError -= 360;
         while (robotError <= -180) robotError += 360;
         return robotError;
     }

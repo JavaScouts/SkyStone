@@ -28,6 +28,8 @@ public class NewTeleOp extends LinearOpMode {
     double multiplier = 0.92;
     boolean moved = false;
     boolean slid = false;
+    boolean foundation = false;
+    boolean block = false;
 
 
     @Override
@@ -37,6 +39,8 @@ public class NewTeleOp extends LinearOpMode {
         boolean curResetState  = false;
         boolean lastResetState2 = false;
         boolean curResetState2  = false;
+        boolean lastResetState3 = false;
+        boolean curResetState3  = false;
         robot.init(hardwareMap, this);
 
         Collec1 = hardwareMap.dcMotor.get("c1");
@@ -99,27 +103,21 @@ public class NewTeleOp extends LinearOpMode {
                 robot.rightDrive.setPower(-power);
 
             }
-            /*
+
             if (gamepad2.x){
                 small.setPosition(0.1);
             } else if (gamepad2.b){
                 small.setPosition(0.75);
             }
             if (gamepad2.y){
-                big.setPosition(0);
+                big.setPosition(0.05);
             } else if (gamepad2.a){
                 big.setPosition(0.6);
             }
-            */
 
-            telemetry.addLine("Press a to go to ready position.");
-            telemetry.addLine("Press x to grab, raise, and rotate.");
-            telemetry.addLine("Press b to release, rotate, and lower.");
-            telemetry.addLine("Press dpad_up to go up one block.");
-            telemetry.addLine("Press dpad_down to go down one block.");
-            telemetry.addLine("Hold left_bumper to hold in position");
-
-            if(gamepad2.a) {
+            telemetry.addData("Foundation servo",foundation);
+            telemetry.addData("Block servo", block);
+/*            if(gamepad2.a) {
 
                 big.setPosition(0);
                 sleep(50);
@@ -150,21 +148,36 @@ public class NewTeleOp extends LinearOpMode {
 
             }
 
-            curResetState = (gamepad2.dpad_down);
+*/
+            curResetState = (gamepad2.left_bumper);
             if (curResetState && !lastResetState) {
-                moveDownOne();
+                foundation = !foundation;
             }
             lastResetState = curResetState;
-
-
-            curResetState2 = (gamepad2.dpad_up);
-            if (curResetState2 && !lastResetState2) {
-                moveUpOne();
+            if(foundation) {
+                robot.hookLeft.setPosition(0.7);
+            } else {
+                robot.hookLeft.setPosition(0);
             }
-            lastResetState2 = curResetState2;
-            Rev.setPower(-0.05);
 
-            double collecPowe = gamepad2.left_stick_y;
+            curResetState3 = (gamepad2.right_bumper);
+            if (curResetState3 && !lastResetState3) {
+                block = !block;
+            }
+            lastResetState3 = curResetState3;
+            if(block) {
+                robot.push_block_further_in_to_placer.setPosition(0.4);
+            } else {
+                robot.push_block_further_in_to_placer.setPosition(0);
+            }
+
+            double lifterPower = gamepad2.left_stick_y * 0.8;
+            if (gamepad2.left_trigger > 0.05) {
+                lifterPower -= 0.05;
+            }
+            Rev.setPower(lifterPower);
+
+            double collecPowe = gamepad2.right_stick_y;
             Collec1.setPower(collecPowe);
             Collec2.setPower(collecPowe);
 

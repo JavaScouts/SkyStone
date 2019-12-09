@@ -23,6 +23,7 @@ public class Hardware {
     DcMotor Collec2;
 
     Servo hookLeft;
+    Servo push_block_further_in_to_placer;
 
     ModernRoboticsI2cGyro gyro;
     ModernRoboticsI2cRangeSensor range;
@@ -58,6 +59,7 @@ public class Hardware {
         Collec1 = map.dcMotor.get("c1");
         Collec2 = map.dcMotor.get("c2");
         hookLeft = map.servo.get("hl");
+        push_block_further_in_to_placer = map.servo.get("pb");
         range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
         color = map.get(ModernRoboticsI2cColorSensor.class, "c");
@@ -78,7 +80,6 @@ public class Hardware {
         myOpMode.telemetry.addData(" Right Encoder Count", rightDrive.getCurrentPosition());
         myOpMode.telemetry.addData(" BLeft Encoder Count", backLDrive.getCurrentPosition());
         myOpMode.telemetry.addData(" BRight Encoder Count", backRDrive.getCurrentPosition());
-
 
         myOpMode.telemetry.update();
 
