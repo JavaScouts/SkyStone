@@ -103,10 +103,10 @@ public class AutonomousB1 extends LinearOpMode {
         g.resetZAxisIntegrator();
 
         h.hookLeft.setPosition(0);
-        driveToPoint(0.51, 0, -42.2, 0, 10);
+        driveToPoint(0.51, 0, -44, 0, 10);
         gyroTurn(0.51,0);
         sleep(50);
-        if (driveToPoint(0.44, -500, 0, 0, 10, "detect-v3",0.1) < 0.38) {
+        if (driveToPoint(0.44, -500, 0, 0, 10, "detect-v3",0.35) < 0.48) {
 
             sleep(50);
             driveToPoint(0.6, 9, 0, 0, 10);

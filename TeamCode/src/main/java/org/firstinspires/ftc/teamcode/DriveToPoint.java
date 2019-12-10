@@ -8,7 +8,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.ArrayList;
 
-@Autonomous(name="Drive To Point")
+@Deprecated
+//@Autonomous(name="Drive To Point")
 public class DriveToPoint extends LinearOpMode {
 
     private static final double WHEEL_RADIUS = 2.98;

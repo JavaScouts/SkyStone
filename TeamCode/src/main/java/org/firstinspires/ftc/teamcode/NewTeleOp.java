@@ -19,8 +19,6 @@ public class NewTeleOp extends LinearOpMode {
     DcMotor Collec1;
     DcMotor Collec2;
     DcMotor Rev;
-    Servo big;
-    Servo small;
     Servo found;
 
     double power = 0.4;
@@ -30,6 +28,8 @@ public class NewTeleOp extends LinearOpMode {
     boolean slid = false;
     boolean foundation = false;
     boolean block = false;
+    boolean smallmove = false;
+    boolean bigmove = false;
 
 
     @Override
@@ -41,18 +41,17 @@ public class NewTeleOp extends LinearOpMode {
         boolean curResetState2  = false;
         boolean lastResetState3 = false;
         boolean curResetState3  = false;
+        boolean lastResetState4 = false;
+        boolean curResetState4  = false;
         robot.init(hardwareMap, this);
 
         Collec1 = hardwareMap.dcMotor.get("c1");
         Collec2 = hardwareMap.dcMotor.get("c2");
-        small = hardwareMap.servo.get("small");
-        big = hardwareMap.servo.get("big");
         found = hardwareMap.servo.get("found");
+        Rev = robot.Rev;
 
         Collec1.setDirection(DcMotorSimple.Direction.REVERSE);
         Collec2.setDirection(DcMotorSimple.Direction.FORWARD);
-        Rev = hardwareMap.dcMotor.get("rev");
-        Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         waitForStart();
 
@@ -105,18 +104,18 @@ public class NewTeleOp extends LinearOpMode {
             }
 
             if (gamepad2.x){
-                small.setPosition(0.1);
+                robot.small.setPosition(0.1);
             } else if (gamepad2.b){
-                small.setPosition(0.75);
+                robot.small.setPosition(0.7);
             }
-            if (gamepad2.y){
-                big.setPosition(0.05);
-            } else if (gamepad2.a){
-                big.setPosition(0.6);
+            if (gamepad2.a){
+                robot.big.setPosition(0.05);
+            } else if (gamepad2.y){
+                robot.big.setPosition(0.6);
             }
 
-            telemetry.addData("Foundation servo",foundation);
-            telemetry.addData("Block servo", block);
+            telemetry.addData("s servo",robot.small.getPosition());
+            telemetry.addData("B servo", robot.big.getPosition());
 /*            if(gamepad2.a) {
 
                 big.setPosition(0);
@@ -160,6 +159,17 @@ public class NewTeleOp extends LinearOpMode {
                 robot.hookLeft.setPosition(0);
             }
 
+            curResetState2 = (gamepad2.y);
+            if (curResetState2 && !lastResetState2) {
+                smallmove = !smallmove;
+            }
+            lastResetState2 = curResetState2;
+            if(smallmove) {
+                robot.small.setPosition(0.1);
+            } else {
+                robot.small.setPosition(0.7);
+            }
+
             curResetState3 = (gamepad2.right_bumper);
             if (curResetState3 && !lastResetState3) {
                 block = !block;
@@ -171,9 +181,20 @@ public class NewTeleOp extends LinearOpMode {
                 robot.push_block_further_in_to_placer.setPosition(0);
             }
 
-            double lifterPower = gamepad2.left_stick_y * 0.8;
+            curResetState4 = (gamepad2.a);
+            if (curResetState4 && !lastResetState4) {
+                bigmove = !bigmove;
+            }
+            lastResetState4 = curResetState4;
+            if(bigmove) {
+                robot.big.setPosition(0.05);
+            } else {
+                robot.big.setPosition(0.6);
+            }
+
+            double lifterPower = gamepad2.left_stick_y * 0.6;
             if (gamepad2.left_trigger > 0.05) {
-                lifterPower -= 0.05;
+                lifterPower -= 0.001;
             }
             Rev.setPower(lifterPower);
 
@@ -193,32 +214,6 @@ public class NewTeleOp extends LinearOpMode {
 
     }
 
-    void moveUpOne() {
-
-        Rev.setTargetPosition(Rev.getCurrentPosition()-500);
-        Rev.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Rev.setPower(0.5);
-        while(Rev.isBusy() && opModeIsActive()) {
-            idle();
-        }
-        Rev.setPower(-0.05);
-        Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-    }
-
-    void moveDownOne() {
-
-        Rev.setTargetPosition(Rev.getCurrentPosition()+500);
-        Rev.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Rev.setPower(0.5);
-        while(Rev.isBusy() && opModeIsActive()) {
-            idle();
-        }
-        sleep(50);
-        Rev.setPower(-0.05);
-        Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-    }
 }
 
 

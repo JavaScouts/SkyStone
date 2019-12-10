@@ -13,7 +13,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  */
 
 @Deprecated
-@TeleOp(name = "Final TeleOp")
+//@TeleOp(name = "Final TeleOp")
 public class FinalTeleOp extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware();

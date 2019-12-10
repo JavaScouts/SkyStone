@@ -21,8 +21,11 @@ public class Hardware {
     DcMotor backRDrive;
     DcMotor Collec1;
     DcMotor Collec2;
+    DcMotor Rev;
 
     Servo hookLeft;
+    Servo small;
+    Servo big;
     Servo push_block_further_in_to_placer;
 
     ModernRoboticsI2cGyro gyro;
@@ -58,8 +61,13 @@ public class Hardware {
         backRDrive = map.dcMotor.get("br");
         Collec1 = map.dcMotor.get("c1");
         Collec2 = map.dcMotor.get("c2");
+        Rev = map.dcMotor.get("rev");
+        Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         hookLeft = map.servo.get("hl");
         push_block_further_in_to_placer = map.servo.get("pb");
+        small = map.servo.get("small");
+        big = map.servo.get("big");
         range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
         color = map.get(ModernRoboticsI2cColorSensor.class, "c");
@@ -100,8 +108,6 @@ public class Hardware {
         rightDrive.setPower(power);
         backLDrive.setPower(power);
         backRDrive.setPower(power);
-        Collec2.setPower(power);
-        Collec1.setPower(power);
 
     }
 

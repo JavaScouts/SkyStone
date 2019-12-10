@@ -24,6 +24,11 @@ public class SkystoneRecognitionR extends LinearOpMode {
 
         while(opModeIsActive()) {
 
+            if(gamepad2.a) {
+                color.enableLed(true);
+            } else {
+                color.enableLed(false);
+            }
             col = color.argb();
             telemetry.addData("argb",col);
             red = color.red();

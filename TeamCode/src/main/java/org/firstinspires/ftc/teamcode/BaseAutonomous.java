@@ -16,7 +16,7 @@ public abstract class BaseAutonomous extends LinearOpMode {
     private ModernRoboticsI2cGyro g;
     private ModernRoboticsI2cColorSensor c;
     private ModernRoboticsI2cRangeSensor rn;
-    private DcMotor l, r, bl, br, c1, c2;
+    private DcMotor l, r, bl, br, c1, c2, Rev;
     private static final double WHEEL_RADIUS = 2.98;
     private static final double CENTER_TO_WHEEL = 8.53;
     private static final double COUNTS_PER_MOTOR_REV = 537.6;
@@ -26,14 +26,13 @@ public abstract class BaseAutonomous extends LinearOpMode {
     static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
     static final double SLOWDOWN = 0.12;
-    private static final double PI = 3.1415;
+    static final double PI = 3.1415;
     private double scale2 = 2.35;
     private double scale3 = 0.1;
 
-    private Hardware h = new Hardware();
+    Hardware h = new Hardware();
     private Vision v = new Vision();
     private ElapsedTime runtime = new ElapsedTime();
-
 
     @Override
     public void runOpMode() {
@@ -54,6 +53,7 @@ public abstract class BaseAutonomous extends LinearOpMode {
         br = h.backRDrive;
         c1 = h.Collec1;
         c2 = h.Collec2;
+        Rev = h.Rev;
         g = h.gyro;
         c = h.color;
         rn = h.range;
@@ -93,13 +93,26 @@ public abstract class BaseAutonomous extends LinearOpMode {
 
     public abstract void after_start();
 
+    void up_one() {
 
-    public void hook_up() {
-        h.hookLeft.setPosition(0);
+        ElapsedTime t = new ElapsedTime();
+        t.reset();
+        while(t.seconds() < 1.25 && opModeIsActive()) {
+            Rev.setPower(-0.25);
+        }
+        Rev.setPower(-0.001);
+
     }
 
-    public void hook_down() {
-        h.hookLeft.setPosition(0.75);
+    void down_the_rest() {
+
+        ElapsedTime t = new ElapsedTime();
+        t.reset();
+        while(t.seconds() < 1.25 && opModeIsActive()) {
+            Rev.setPower(0.25);
+        }
+        Rev.setPower(-0.001);
+
     }
 
     double driveToPoint(double powerLimit, double x, double y, double rot, double timeoutS) {
@@ -254,6 +267,10 @@ public abstract class BaseAutonomous extends LinearOpMode {
 
                         // Display drive status for the driver.
                         telemetry.addData("Err/St", "%5.1f/%5.1f", error, steer);
+                        break;
+
+                    case "place":
+
                         break;
 
                     default:

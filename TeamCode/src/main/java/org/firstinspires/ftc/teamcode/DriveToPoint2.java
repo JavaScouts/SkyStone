@@ -5,7 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="Drive To Point 2")
+@Deprecated
+//@Autonomous(name="Drive To Point 2")
 public class DriveToPoint2 extends LinearOpMode {
 
     private static final double WHEEL_RADIUS = 2.98;
