@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -23,7 +24,7 @@ public class Hardware {
     DcMotor Collec2;
     DcMotor Rev;
 
-    Servo hookLeft;
+    Servo hookLeft, hookRight;
     Servo small;
     Servo big;
     Servo push_block_further_in_to_placer;
@@ -31,6 +32,7 @@ public class Hardware {
     ModernRoboticsI2cGyro gyro;
     ModernRoboticsI2cRangeSensor range;
     ModernRoboticsI2cColorSensor color;
+    RevColorSensorV3 color2;
 
     //driving coefficients
     private double driveAxial = 0;   // Positive is forward
@@ -65,12 +67,14 @@ public class Hardware {
         Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         hookLeft = map.servo.get("hl");
+        hookRight = map.servo.get("found2");
         push_block_further_in_to_placer = map.servo.get("pb");
         small = map.servo.get("small");
         big = map.servo.get("big");
         range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
         color = map.get(ModernRoboticsI2cColorSensor.class, "c");
+        color2 = map.get(RevColorSensorV3.class,"cr");
 
         //reverse nessecary motors
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);

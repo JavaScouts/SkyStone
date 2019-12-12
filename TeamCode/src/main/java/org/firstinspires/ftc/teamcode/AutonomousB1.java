@@ -7,6 +7,7 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -30,6 +31,8 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
+@Disabled
 @Autonomous(name="Autonomous B1")
 public class AutonomousB1 extends LinearOpMode {
 

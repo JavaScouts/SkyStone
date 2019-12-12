@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -15,6 +16,7 @@ public abstract class BaseAutonomous extends LinearOpMode {
 
     private ModernRoboticsI2cGyro g;
     private ModernRoboticsI2cColorSensor c;
+    private RevColorSensorV3 cr;
     private ModernRoboticsI2cRangeSensor rn;
     private DcMotor l, r, bl, br, c1, c2, Rev;
     private static final double WHEEL_RADIUS = 2.98;
@@ -22,10 +24,11 @@ public abstract class BaseAutonomous extends LinearOpMode {
     private static final double COUNTS_PER_MOTOR_REV = 537.6;
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
     private static final double WHEEL_DIAMETER_INCHES = 2.95;
+    private boolean RED;
     private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
-    static final double SLOWDOWN = 0.12;
+    static final double SLOWDOWN = 0.08;
     static final double PI = 3.1415;
     private double scale2 = 2.35;
     private double scale3 = 0.1;
@@ -43,7 +46,7 @@ public abstract class BaseAutonomous extends LinearOpMode {
 
     }
 
-    private void before_start() {
+    public void before_start_blue() {
 
         h.init(hardwareMap, this);
         //setupVision();
@@ -76,6 +79,44 @@ public abstract class BaseAutonomous extends LinearOpMode {
         telemetry.log().clear();
         telemetry.log().add("Gyro Calibrated. Press Start.");
         telemetry.clear();
+        RED = false;
+
+    }
+
+    public void before_start_red() {
+
+        h.init(hardwareMap, this);
+        //setupVision();
+        l = h.leftDrive;
+        r = h.rightDrive;
+        bl = h.backLDrive;
+        br = h.backRDrive;
+        c1 = h.Collec1;
+        c2 = h.Collec2;
+        Rev = h.Rev;
+        g = h.gyro;
+        cr = h.color2;
+        rn = h.range;
+        h.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        h.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        telemetry.log().add("Hardware initialized.");
+
+        sleep(120);
+        telemetry.log().add("Gyro Calibrating. Do Not Move!");
+        g.calibrate();
+
+        // Wait until the gyro calibration is complete
+        runtime.reset();
+        while (!isStopRequested() && g.isCalibrating()) {
+            telemetry.addData("calibrating", "%s", Math.round(runtime.seconds()) % 2 == 0 ? "|.." : "..|");
+            telemetry.update();
+            sleep(10);
+        }
+
+        telemetry.log().clear();
+        telemetry.log().add("Gyro Calibrated. Press Start.");
+        telemetry.clear();
+        RED = true;
 
     }
 
@@ -91,8 +132,35 @@ public abstract class BaseAutonomous extends LinearOpMode {
 
     }
 
+    public abstract void before_start();
     public abstract void after_start();
 
+    void curve_it(double desired_heading, double l_power, double r_power) {
+
+        while(opModeIsActive() && getError(desired_heading)!=0) {
+
+            l.setPower(l_power);
+            r.setPower(r_power);
+            bl.setPower(l_power);
+            br.setPower(r_power);
+            telemetry.addData("g heading", g.getIntegratedZValue());
+
+        }
+        cancelMovement();
+
+    }
+
+    void place_block() {
+        up_one();
+        h.big.setPosition(0.6);
+        sleep(700);
+        h.small.setPosition(0.1);
+        sleep(300);
+        h.small.setPosition(0.7);
+        h.big.setPosition(0.05);
+        sleep(700);
+        down_the_rest();
+    }
     void up_one() {
 
         ElapsedTime t = new ElapsedTime();
@@ -201,19 +269,36 @@ public abstract class BaseAutonomous extends LinearOpMode {
                         if (params != 0) {
                             delay = params;
                         }
-                        if (c.red() == 0 && runtime.seconds() < delay) {
-                            telemetry.addData("Facing", "Waiting");
-                            break;
-                        }
-                        if (c.red() > 0 && runtime.seconds() > delay) {
-                            telemetry.addData("Facing", "Stone");
-                            break;
-                        }
-                        if (c.red() == 0 && runtime.seconds() > delay) {
-                            telemetry.addData("Facing", "Skystone");
-                            telemetry.log().add(runtime.seconds() + " seconds have elapsed.");
-                            cancelMovement();
-                            return runtime.seconds();
+                        if(!RED) {
+                            if (c.red() == 0 && runtime.seconds() < delay) {
+                                telemetry.addData("Facing", "Waiting");
+                                break;
+                            }
+                            if (c.red() > 0 && runtime.seconds() > delay) {
+                                telemetry.addData("Facing", "Stone");
+                                break;
+                            }
+                            if (c.red() == 0 && runtime.seconds() > delay) {
+                                telemetry.addData("Facing", "Skystone");
+                                telemetry.log().add(runtime.seconds() + " seconds have elapsed.");
+                                cancelMovement();
+                                return runtime.seconds();
+                            }
+                        } else {
+                            if (cr.red() == 0 && runtime.seconds() < delay) {
+                                telemetry.addData("Facing", "Waiting");
+                                break;
+                            }
+                            if (cr.red() > 0 && runtime.seconds() > delay) {
+                                telemetry.addData("Facing", "Stone");
+                                break;
+                            }
+                            if (cr.red() == 0 && runtime.seconds() > delay) {
+                                telemetry.addData("Facing", "Skystone");
+                                telemetry.log().add(runtime.seconds() + " seconds have elapsed.");
+                                cancelMovement();
+                                return runtime.seconds();
+                            }
                         }
                         break;
 
@@ -234,6 +319,20 @@ public abstract class BaseAutonomous extends LinearOpMode {
                             return 0;
                         } else {
                             telemetry.addData("Range:", dist);
+                        }
+                        break;
+                    case "range-2":
+                        double stop2 = 20;
+                        if (params != 0) {
+                            stop2 = params;
+                        }
+                        double dist2 = rn.getDistance(DistanceUnit.INCH);
+                        if (dist2 > stop2) {
+                            telemetry.addLine("Stopping due to range");
+                            cancelMovement();
+                            return 0;
+                        } else {
+                            telemetry.addData("Range:", dist2);
                         }
                         break;
                     case "correct":

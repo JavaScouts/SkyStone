@@ -24,8 +24,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
-@Autonomous(name="Autonomous Blue Two Stones")
-public class AutonomousB2 extends BaseAutonomous {
+@Autonomous(name="(Blue1)  >1Stone>Deliver>Park", group="b_final")
+public class Auto_B1 extends BaseAutonomous {
+
+    @Override
+    public void before_start() {
+        before_start_blue();
+    }
 
     @Override
     public void after_start() {
@@ -33,7 +38,9 @@ public class AutonomousB2 extends BaseAutonomous {
         h.small.setPosition(0.1);
         h.big.setPosition(0.05);
         h.push_block_further_in_to_placer.setPosition(0);
-        driveToPoint(0.51, 0, -42.1, 0, 10);
+        h.hookRight.setPosition(0);
+        h.hookLeft.setPosition(0);
+        driveToPoint(0.51, 0, -44, 0, 10);
         gyroTurn(0.51,0);
         sleep(50);
 
@@ -41,12 +48,12 @@ public class AutonomousB2 extends BaseAutonomous {
         if (driveToPoint(0.44, -500, 0, 0, 10, "detect-v3",0.1) < 0.3) {
 
             sleep(50);
-            driveToPoint(0.6, 9, 0, 0, 10);
+            driveToPoint(0.6, 12, 0, 0, 10);
             sleep(10);
             driveToPoint(0.5, 0, 0, PI / 4, 10);
             sleep(10);
             driveToPoint(0.45, -17, 0, 0, 10, "collect");
-            sleep(100);
+            sleep(200);
             h.push_block_further_in_to_placer.setPosition(0.4);
             sleep(700);
             driveToPoint(0.45, 17, 0, 0, 10);
@@ -56,8 +63,8 @@ public class AutonomousB2 extends BaseAutonomous {
             h.Collec2.setPower(0);
             h.Collec1.setPower(0);
             sleep(50);
-            driveToPoint(0.6, 0, 10, 0, 10);
-            gyroTurn(0.5,0);
+            driveToPoint(0.6, 0, 9, 0, 10);
+            gyroTurn(0.3,0);
             sleep(50);
 
         //skystone is somewhere else
@@ -66,43 +73,37 @@ public class AutonomousB2 extends BaseAutonomous {
             sleep(50);
             driveToPoint(0.6, 12, 0, 0, 10);
             sleep(10);
-            driveToPoint(0.6,0,-15,0,10);
+            driveToPoint(0.6,0,-16.4,0,10);
             sleep(5);
             driveToPoint(0.6,-8.7,0,0,10,"collect");
-            sleep(100);
+            sleep(200);
             h.push_block_further_in_to_placer.setPosition(0.4);
             sleep(700);
             driveToPoint(0.6,8.7,0,0,10);
             sleep(10);
             h.small.setPosition(0.7);
-            driveToPoint(0.7,0,28,0,10);
+            driveToPoint(0.7,0,27,0,10);
             h.Collec2.setPower(0);
             h.Collec1.setPower(0);
-            gyroTurn(0.5,0);
+            gyroTurn(0.3,0);
             sleep(50);
 
         }
         h.push_block_further_in_to_placer.setPosition(0);
-        driveToPoint(0.7, 1000, 0, 0, 10, "range-1", 20);
+        driveToPoint(0.7, 1000, 0, 0, 10, "range-1", 22);
         sleep(50);
-        gyroTurn(0.5,-90);
-        driveToPoint(0.7,5,0,0,10);
+        gyroTurn(0.55,-90);
+        driveToPoint(0.7,13,0,0,10);
 
-        up_one();
-        h.big.setPosition(0.6);
-        sleep(700);
-        h.small.setPosition(0.1);
-        sleep(300);
-        h.small.setPosition(0.7);
-        h.big.setPosition(0.05);
-        sleep(700);
-        down_the_rest();
+        place_block();
 
-        driveToPoint(0.6,-8,0,0,10);
+        driveToPoint(0.6,-13,0,0,10);
         sleep(50);
-        gyroTurn(0.5,0);
-        driveToPoint(0.6,-500,0,0,10,"detect-v3");
-        sleep(50);
+        gyroTurn(0.45,0);
+        driveToPoint(0.6,-1000,0,0,10,"range-2",58);
+        telemetry.log().add("aight, imma head out");
+
+        /*
         driveToPoint(0.6, 12, 0, 0, 10);
         sleep(10);
         driveToPoint(0.6,0,-15,0,10);
@@ -118,7 +119,7 @@ public class AutonomousB2 extends BaseAutonomous {
         h.Collec2.setPower(0);
         h.Collec1.setPower(0);
         gyroTurn(0.5,0);
-        sleep(50);
+        sleep(50);*/
 
     }
 
