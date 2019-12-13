@@ -59,15 +59,15 @@ public class NewTeleOp extends LinearOpMode {
             if (gamepad1.left_bumper) {
                 multiplier = 0.92;
             } else if (gamepad1.right_bumper) {
-                multiplier = 0.3;
+                multiplier = 1;
             }
 
-            if (gamepad1.right_stick_x == 0) {
+            /*if (gamepad1.right_stick_x == 0) {
                 robot.smartPower = 0;
                 telemetry.addLine("Smart Power resetting due to release of joystick.");
-            }
+            }*/
 
-            robot.smartManualDrive(multiplier);
+            robot.manualDrive(multiplier);
             robot.moveRobot();
 
 
@@ -104,7 +104,7 @@ public class NewTeleOp extends LinearOpMode {
             if (gamepad2.x){
                 robot.small.setPosition(0.1);
             } else if (gamepad2.b){
-                robot.small.setPosition(0.7);
+                robot.small.setPosition(0.66);
             }
             if (gamepad2.a){
                 robot.big.setPosition(0.05);
@@ -153,10 +153,10 @@ public class NewTeleOp extends LinearOpMode {
             lastResetState = curResetState;
             if(foundation) {
                 robot.hookLeft.setPosition(1);
-                robot.hookRight.setPosition(0.92);
+                robot.hookRight.setPosition(1);
             } else {
                 robot.hookLeft.setPosition(0);
-                robot.hookRight.setPosition(0.2);
+                robot.hookRight.setPosition(0);
             }
 
             curResetState2 = (gamepad2.y);
@@ -165,9 +165,9 @@ public class NewTeleOp extends LinearOpMode {
             }
             lastResetState2 = curResetState2;
             if(smallmove) {
-                robot.small.setPosition(0.1);
-            } else {
                 robot.small.setPosition(0.7);
+            } else {
+                robot.small.setPosition(0.1);
             }
 
             curResetState3 = (gamepad2.right_bumper);
@@ -187,9 +187,9 @@ public class NewTeleOp extends LinearOpMode {
             }
             lastResetState4 = curResetState4;
             if(bigmove) {
-                robot.big.setPosition(0.05);
-            } else {
                 robot.big.setPosition(0.6);
+            } else {
+                robot.big.setPosition(0.05);
             }
 
             double lifterPower = gamepad2.left_stick_y * 0.6;

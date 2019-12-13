@@ -32,7 +32,7 @@ public class Hardware {
     ModernRoboticsI2cGyro gyro;
     ModernRoboticsI2cRangeSensor range;
     ModernRoboticsI2cColorSensor color;
-    RevColorSensorV3 color2;
+    ModernRoboticsI2cColorSensor color2;
 
     //driving coefficients
     private double driveAxial = 0;   // Positive is forward
@@ -74,7 +74,7 @@ public class Hardware {
         range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
         color = map.get(ModernRoboticsI2cColorSensor.class, "c");
-        color2 = map.get(RevColorSensorV3.class,"cr");
+        color2 = map.get(ModernRoboticsI2cColorSensor.class,"cr");
 
         //reverse nessecary motors
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);

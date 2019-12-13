@@ -16,7 +16,7 @@ public abstract class BaseAutonomous extends LinearOpMode {
 
     private ModernRoboticsI2cGyro g;
     private ModernRoboticsI2cColorSensor c;
-    private RevColorSensorV3 cr;
+    private ModernRoboticsI2cColorSensor cr;
     private ModernRoboticsI2cRangeSensor rn;
     private DcMotor l, r, bl, br, c1, c2, Rev;
     private static final double WHEEL_RADIUS = 2.98;
@@ -137,13 +137,17 @@ public abstract class BaseAutonomous extends LinearOpMode {
 
     void curve_it(double desired_heading, double l_power, double r_power) {
 
-        while(opModeIsActive() && getError(desired_heading)!=0) {
+        double e = getError(desired_heading);
+        while(opModeIsActive() && e!=0 && e!=1 && e!=-1) {
 
+            e = getError(desired_heading);
             l.setPower(l_power);
             r.setPower(r_power);
             bl.setPower(l_power);
             br.setPower(r_power);
             telemetry.addData("g heading", g.getIntegratedZValue());
+            telemetry.addData("err", e);
+            telemetry.update();
 
         }
         cancelMovement();

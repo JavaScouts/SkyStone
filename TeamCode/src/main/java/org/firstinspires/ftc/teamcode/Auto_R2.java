@@ -2,12 +2,12 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="(Blue2) >1Stone>Deliver>Relocate>Park", group="b_final")
-public class Auto_B2 extends BaseAutonomous {
+@Autonomous(name="(Red2) >1Stone>Deliver>Relocate>Park", group="r_final")
+public class Auto_R2 extends BaseAutonomous {
 
     @Override
     public void before_start() {
-        before_start_blue();
+        before_start_red();
     }
 
     @Override
@@ -18,7 +18,7 @@ public class Auto_B2 extends BaseAutonomous {
         h.push_block_further_in_to_placer.setPosition(0);
         h.hookRight.setPosition(0);
         h.hookLeft.setPosition(0);
-        driveToPoint(0.51, 0, -44.3, 0, 10);
+        driveToPoint(0.51, 0, 42.5, 0, 10);
         gyroTurn(0.51,0);
         sleep(50);
 
@@ -26,9 +26,9 @@ public class Auto_B2 extends BaseAutonomous {
         if (driveToPoint(0.44, -500, 0, 0, 10, "detect-v3",0.1) < 0.3) {
 
             sleep(50);
-            driveToPoint(0.6, 12, 0, 0, 10);
+            driveToPoint(0.6, 14, 0, 0, 10);
             sleep(10);
-            driveToPoint(0.5, 0, 0, PI / 5, 10);
+            driveToPoint(0.5, 0, 0, -PI / 5, 10);
             sleep(10);
             driveToPoint(0.45, -17, 0, 0, 10, "collect");
             sleep(200);
@@ -37,11 +37,11 @@ public class Auto_B2 extends BaseAutonomous {
             driveToPoint(0.45, 17, 0, 0, 10);
             sleep(50);
             h.small.setPosition(0.7);
-            driveToPoint(0.5, 0, 0, -PI / 5, 10);
+            driveToPoint(0.5, 0, 0, PI / 5, 10);
             h.Collec2.setPower(0);
             h.Collec1.setPower(0);
             sleep(50);
-            driveToPoint(0.6, 0, 13, 0, 10);
+            driveToPoint(0.6, 0, -11, 0, 10);
             gyroTurn(0.3,0);
             sleep(50);
 
@@ -49,9 +49,9 @@ public class Auto_B2 extends BaseAutonomous {
         } else {
 
             sleep(50);
-            driveToPoint(0.6, 12.7, 0, 0, 10);
+            driveToPoint(0.6, 12, 0, 0, 10);
             sleep(10);
-            driveToPoint(0.6,0,-16.4,0,10);
+            driveToPoint(0.6,0,16.4,0,10);
             sleep(5);
             driveToPoint(0.6,-8.7,0,0,10,"collect");
             sleep(200);
@@ -60,7 +60,7 @@ public class Auto_B2 extends BaseAutonomous {
             driveToPoint(0.6,8.7,0,0,10);
             sleep(10);
             h.small.setPosition(0.7);
-            driveToPoint(0.7,0,20,0,10);
+            driveToPoint(0.7,0,-21,0,10);
             h.Collec2.setPower(0);
             h.Collec1.setPower(0);
             gyroTurn(0.3,0);
@@ -70,8 +70,8 @@ public class Auto_B2 extends BaseAutonomous {
         h.push_block_further_in_to_placer.setPosition(0);
         driveToPoint(0.7, 1000, 0, 0, 10, "range-1", 18);
         sleep(50);
-        gyroTurn(0.35,-90);
-        driveToPoint(0.7,13,0,0,10);
+        gyroTurn(0.35,90);
+        driveToPoint(0.7,14,0,0,10);
 
         place_block();
 
@@ -79,17 +79,17 @@ public class Auto_B2 extends BaseAutonomous {
         h.hookLeft.setPosition(1);
         h.hookRight.setPosition(1);
         sleep(700);
-        curve_it(0,-0.85,-0.12);
+        curve_it(2,-0.12,-0.88);
         sleep(50);
         h.hookRight.setPosition(0);
         h.hookLeft.setPosition(0);
         sleep(100);
         gyroTurn(0.6,0);
-        driveToPoint(0.6,22,0,0,10);
+        driveToPoint(0.6,19,0,0,10);
         driveToPoint(0.6,-12,0,0, 10);
         gyroTurn(0.74,0);
         sleep(50);
-        driveToPoint(0.6,0,-22,0,10);
+        driveToPoint(0.6,0,25,0,10);
         gyroTurn(0.5,0);
         driveToPoint(0.6,-50,0,0,5);
 
