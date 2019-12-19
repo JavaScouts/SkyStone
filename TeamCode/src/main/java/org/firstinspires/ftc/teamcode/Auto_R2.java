@@ -18,7 +18,7 @@ public class Auto_R2 extends BaseAutonomous {
         h.push_block_further_in_to_placer.setPosition(0);
         h.hookRight.setPosition(0);
         h.hookLeft.setPosition(0);
-        driveToPoint(0.51, 0, 42.5, 0, 10);
+        driveToPoint(0.51, 0, 43.25, 0, 10);
         gyroTurn(0.51,0);
         sleep(50);
 
@@ -79,7 +79,9 @@ public class Auto_R2 extends BaseAutonomous {
         h.hookLeft.setPosition(1);
         h.hookRight.setPosition(1);
         sleep(700);
+
         curve_it(2,-0.12,-0.88);
+
         sleep(50);
         h.hookRight.setPosition(0);
         h.hookLeft.setPosition(0);
@@ -91,7 +93,7 @@ public class Auto_R2 extends BaseAutonomous {
         sleep(50);
         driveToPoint(0.6,0,25,0,10);
         gyroTurn(0.5,0);
-        driveToPoint(0.6,-50,0,0,5);
+        driveToPoint(0.6,-40,0,0,5);
 
         /*
         driveToPoint(0.6, 12, 0, 0, 10);
