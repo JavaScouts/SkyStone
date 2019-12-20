@@ -2,11 +2,16 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name = "(Blue3) >Wait>Park")
-public class Auto_B_Park extends BaseAutonomous {
+@Autonomous(name = ">Wait>Park", group="standard")
+public class Auto_Park extends BaseAutonomous {
+
+
 
 
     static final long SECONDS_TO_WAIT = 5;
+
+
+
 
 
     @Override

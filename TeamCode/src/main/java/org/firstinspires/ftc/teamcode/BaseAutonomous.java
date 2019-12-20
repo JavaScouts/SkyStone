@@ -14,11 +14,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public abstract class BaseAutonomous extends LinearOpMode {
 
-    private ModernRoboticsI2cGyro g;
-    private ModernRoboticsI2cColorSensor c;
-    private ModernRoboticsI2cColorSensor cr;
-    private ModernRoboticsI2cRangeSensor rn;
-    private DcMotor l, r, bl, br, c1, c2, Rev;
+    ModernRoboticsI2cGyro g;
+    ModernRoboticsI2cColorSensor c;
+    ModernRoboticsI2cColorSensor cr;
+    ModernRoboticsI2cRangeSensor rn;
+    DcMotor l, r, bl, br, c1, c2, Rev;
     private static final double WHEEL_RADIUS = 2.98;
     private static final double CENTER_TO_WHEEL = 8.53;
     private static final double COUNTS_PER_MOTOR_REV = 537.6;
