@@ -6,6 +6,7 @@ import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -38,7 +39,7 @@ public class AutonomousB1 extends LinearOpMode {
 
     private ModernRoboticsI2cGyro g;
     private ModernRoboticsI2cColorSensor c;
-    private ModernRoboticsI2cRangeSensor rn;
+    private Rev2mDistanceSensor rn;
     private DcMotor l, r, bl, br, c1, c2;
     private static final double WHEEL_RADIUS = 2.98;
     private static final double CENTER_TO_WHEEL = 8.53;

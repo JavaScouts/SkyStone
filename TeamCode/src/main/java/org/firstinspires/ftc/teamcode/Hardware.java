@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -30,7 +31,7 @@ public class Hardware {
     Servo push_block_further_in_to_placer;
 
     ModernRoboticsI2cGyro gyro;
-    ModernRoboticsI2cRangeSensor range;
+    Rev2mDistanceSensor range;
     ModernRoboticsI2cColorSensor color;
     ModernRoboticsI2cColorSensor color2;
 
@@ -71,7 +72,7 @@ public class Hardware {
         push_block_further_in_to_placer = map.servo.get("pb");
         small = map.servo.get("small");
         big = map.servo.get("big");
-        range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
+        range = map.get(Rev2mDistanceSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
         color = map.get(ModernRoboticsI2cColorSensor.class, "c");
         color2 = map.get(ModernRoboticsI2cColorSensor.class,"cr");

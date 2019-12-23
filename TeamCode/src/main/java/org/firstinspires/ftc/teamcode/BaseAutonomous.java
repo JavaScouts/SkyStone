@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -17,7 +18,7 @@ public abstract class BaseAutonomous extends LinearOpMode {
     ModernRoboticsI2cGyro g;
     ModernRoboticsI2cColorSensor c;
     ModernRoboticsI2cColorSensor cr;
-    ModernRoboticsI2cRangeSensor rn;
+    Rev2mDistanceSensor rn;
     DcMotor l, r, bl, br, c1, c2, Rev;
     private static final double WHEEL_RADIUS = 2.98;
     private static final double CENTER_TO_WHEEL = 8.53;
