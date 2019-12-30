@@ -20,23 +20,23 @@ public abstract class BaseAutonomous extends LinearOpMode {
     ModernRoboticsI2cColorSensor cr;
     Rev2mDistanceSensor rn;
     DcMotor l, r, bl, br, c1, c2, Rev;
-    private static final double WHEEL_RADIUS = 2.98;
-    private static final double CENTER_TO_WHEEL = 8.53;
+    static final double WHEEL_RADIUS = 2.98;
+    static final double CENTER_TO_WHEEL = 8.53;
     private static final double COUNTS_PER_MOTOR_REV = 537.6;
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
     private static final double WHEEL_DIAMETER_INCHES = 2.95;
     private boolean RED;
-    private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
+    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
     static final double SLOWDOWN = 0.08;
     static final double PI = 3.1415;
-    private double scale2 = 2.35;
-    private double scale3 = 0.1;
+    double scale2 = 2.35;
+    double scale3 = 0.1;
 
     Hardware h = new Hardware();
     private Vision v = new Vision();
-    private ElapsedTime runtime = new ElapsedTime();
+    ElapsedTime runtime = new ElapsedTime();
 
     @Override
     public void runOpMode() {
