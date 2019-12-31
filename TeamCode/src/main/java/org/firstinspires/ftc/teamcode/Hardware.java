@@ -41,6 +41,10 @@ public class Hardware {
     private double driveYaw = 0;   // Positive is CCW
     private static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     private static final double P_TURN_COEFF = 0.1;
+    private double KP = 8;
+    private double KI = 0;
+    private double KD = 0.005;
+
 
     double smartPower = 0;
 
@@ -192,12 +196,39 @@ public class Hardware {
 
     }
 
-    void moveRobot2() {
+    double[] moveRobot2(double angle, double[] prev, boolean is_first_run) {
         // calculate required motor powers to achieve axis motions, based on the movement of mecanum wheels
         double backL = driveAxial - driveLateral + driveYaw;
         double backR = driveAxial + driveLateral - driveYaw;
         double left = driveAxial + driveLateral + driveYaw;
         double right = driveAxial - driveLateral - driveYaw;
+
+        double err;
+        double prev_err = prev[0];
+        double integral = prev[1];
+        double derivative;
+        double output;
+        double dt = 0.001;
+        //PID
+        if(is_first_run) {
+            prev = new double[] {0,0};
+            prev_err = 0;
+            integral = 0;
+        }
+
+        err = getError(angle);
+        err = BaseAutonomous.map(err, -180, 180, -1, 1);
+        integral = integral + (err * dt);
+        derivative = (err - prev_err) / dt;
+        output = (KP * err) + (KI * integral) + (KD * derivative);
+        myOpMode.telemetry.addData("pid output",output);
+        prev[0] = err;
+        prev[1] = integral;
+
+        left -= output;
+        right += output;
+        backL -= output;
+        backR += output;
 
         // normalize all motor speeds so no values exceeds 100%
         double max = Math.max(Math.abs(left), Math.abs(right));
@@ -211,14 +242,14 @@ public class Hardware {
         }
 
         // Set drive motor smartPower levels
-        backLDrive.setPower(backL*0.85);
-        backRDrive.setPower(backR);
-        leftDrive.setPower(left*0.85);
+        leftDrive.setPower(left);
         rightDrive.setPower(right);
+        backRDrive.setPower(backR);
+        backLDrive.setPower(backL);
 
         // Display Telemetry
-        //myOpMode.telemetry.addData("Axes  ", "A[%+5.2f], L[%+5.2f], >>Y[%+5.2f]<<", driveAxial, driveLateral, driveYaw);
-        //myOpMode.telemetry.addData("Wheels", "L[%+5.2f], R[%+5.2f], BL[%+5.2f], BR[%+5.2f]", left, right, backL, backR);
+        myOpMode.telemetry.addData("Wheels", "L[%+5.2f], R[%+5.2f], BL[%+5.2f], BR[%+5.2f]", left, right, backL, backR);
+        return prev;
 
     }
 
@@ -284,7 +315,7 @@ public class Hardware {
         double robotError;
 
         // calculate error in -179 to +180 range  (
-        robotError = targetAngle - gyro.getHeading();
+        robotError = targetAngle - gyro.getIntegratedZValue();
         while (robotError > 180) robotError -= 360;
         while (robotError <= -180) robotError += 360;
         return robotError;

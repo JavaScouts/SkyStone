@@ -35,10 +35,8 @@ public class Auto_PIDTest extends BaseAutonomous {
     @Override
     public void after_start() {
 
-        pid_drive(0.4,0,4,0.001);
-        pid_strafe(0.4,0,4,0.001);
-        pid_strafe(-0.4,0,4,0.001);
-        pid_drive(-0.4,0,4,0.001);
+        pid_strafe(0.6,0,2,0.001);
+        pid_strafe(-0.6,0,2,0.001);
 
     }
 
@@ -78,7 +76,6 @@ public class Auto_PIDTest extends BaseAutonomous {
             }
 
             sleep((long)(dt * 1000));
-
         }
         for (DcMotor motor : motors) {
             motor.setPower(0);
@@ -131,12 +128,6 @@ public class Auto_PIDTest extends BaseAutonomous {
 
     }
 
-
-    double map(double x, double min_a, double max_a, double min_b, double max_b) {
-
-        return (x-min_a)/(max_a-min_a) * (max_b-min_b) + min_b;
-
-    }
 
 
 }

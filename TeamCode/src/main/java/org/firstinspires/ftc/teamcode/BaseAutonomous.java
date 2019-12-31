@@ -479,7 +479,7 @@ public abstract class BaseAutonomous extends LinearOpMode {
 
     }
 
-    double map(double x, double min_a, double max_a, double min_b, double max_b) {
+    static double map(double x, double min_a, double max_a, double min_b, double max_b) {
         return (x - min_a) / (max_a - min_a) * (max_b - min_b) + min_b;
     }
 

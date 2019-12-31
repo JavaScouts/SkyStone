@@ -53,7 +53,9 @@ public class NewTeleOp extends LinearOpMode {
 
         waitForStart();
 
-
+        boolean first_time = true;
+        double hold_angle= 0;
+        double[] store = {0,0};
         while (opModeIsActive()) {
 
             if (gamepad1.left_bumper) {
@@ -68,7 +70,22 @@ public class NewTeleOp extends LinearOpMode {
             }*/
 
             robot.manualDrive(multiplier);
-            robot.moveRobot();
+            if((notResting(gamepad1.left_stick_x) || notResting(gamepad1.left_stick_y)) && resting(gamepad1.right_stick_x)) {
+                if(first_time) {
+                    store = robot.moveRobot2(hold_angle, store, true);
+                    first_time = false;
+                } else {
+                    store = robot.moveRobot2(hold_angle, store, false);
+                    telemetry.addLine("Adjusting.");
+                }
+                sleep(1);
+                telemetry.addData("Holding angle:", hold_angle);
+            } else {
+                first_time = true;
+                robot.moveRobot();
+                hold_angle = robot.gyro.getHeading();
+                telemetry.addData("Changin angle:", hold_angle);
+            }
 
 
             if(gamepad1.dpad_left) {
@@ -213,6 +230,19 @@ public class NewTeleOp extends LinearOpMode {
         }
 
     }
+
+    boolean notResting(double pad) {
+
+        return (pad > 0.04) || (pad < -0.04);
+
+    }
+
+    boolean resting(double pad) {
+
+        return (pad < 0.04) && (pad > -0.04);
+
+    }
+
 
 }
 
