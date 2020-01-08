@@ -21,6 +21,8 @@ public class NewSkyStonePipeline extends OpenCvPipeline {
 	private Point newPoint1Output = new Point();
 	private Mat cvRectangleOutput = new Mat();
 	private Mat hsvThresholdOutput = new Mat();
+	private Mat drawnOutput = new Mat();
+	private Mat blurOutput = new Mat();
 	private ArrayList<MatOfPoint> findContoursOutput = new ArrayList<MatOfPoint>();
 	private ArrayList<MatOfPoint> filterContoursOutput = new ArrayList<MatOfPoint>();
 	private ArrayList<MatOfPoint> convexHullsOutput = new ArrayList<MatOfPoint>();
@@ -61,16 +63,36 @@ public class NewSkyStonePipeline extends OpenCvPipeline {
 		Point cvRectanglePt1 = newPoint0Output;
 		Point cvRectanglePt2 = newPoint1Output;
 		Scalar cvRectangleColor = new Scalar(0.0, 0.0, 0.0, 0.0);
-		double cvRectangleThickness = 260.0;
+		double cvRectangleThickness = 280.0;
 		int cvRectangleLinetype = Core.FILLED;
 		double cvRectangleShift = 0.0;
 		cvRectangle(cvRectangleSrc, cvRectanglePt1, cvRectanglePt2, cvRectangleColor, cvRectangleThickness, cvRectangleLinetype, cvRectangleShift, cvRectangleOutput);
 
+		newPoint0X = 500.0;
+		newPoint0Y = -50.0;
+		newPoint(newPoint0X, newPoint0Y, newPoint0Output);
+
+		newPoint1X = 600.0;
+		newPoint1Y = 500.0;
+		newPoint(newPoint1X, newPoint1Y, newPoint1Output);
+
+		// Step CV_rectangle1:
+		cvRectangleSrc = cvRectangleOutput;
+		cvRectanglePt1 = newPoint0Output;
+		cvRectanglePt2 = newPoint1Output;
+		cvRectangle(cvRectangleSrc, cvRectanglePt1, cvRectanglePt2, cvRectangleColor, 200.0, cvRectangleLinetype, cvRectangleShift, cvRectangleOutput);
+
+		// Step Blur0:
+		Mat blurInput = cvRectangleOutput;
+		BlurType blurType = BlurType.get("Box Blur");
+		double blurRadius = 6;
+		blur(blurInput, blurType, blurRadius, blurOutput);
+
 		// Step HSV_Threshold0:
-		Mat hsvThresholdInput = cvRectangleOutput;
-		double[] hsvThresholdHue = {100, 180.0};
+		Mat hsvThresholdInput = blurOutput;
+		double[] hsvThresholdHue = {104.0, 180.0};
 		double[] hsvThresholdSaturation = {0.0, 255.0};
-		double[] hsvThresholdValue = {0.0, 255.0};
+		double[] hsvThresholdValue = {1.0, 220.0};
 		hsvThreshold(hsvThresholdInput, hsvThresholdHue, hsvThresholdSaturation, hsvThresholdValue, hsvThresholdOutput);
 
 		// Step Find_Contours0:
@@ -82,9 +104,9 @@ public class NewSkyStonePipeline extends OpenCvPipeline {
 		ArrayList<MatOfPoint> filterContoursContours = findContoursOutput;
 		double filterContoursMinArea = 0;
 		double filterContoursMinPerimeter = 0;
-		double filterContoursMinWidth = 0;
+		double filterContoursMinWidth = 50;
 		double filterContoursMaxWidth = 1000;
-		double filterContoursMinHeight = 50.0;
+		double filterContoursMinHeight = 0;
 		double filterContoursMaxHeight = 1000;
 		double[] filterContoursSolidity = {0, 100};
 		double filterContoursMaxVertices = 1000000;
@@ -102,6 +124,26 @@ public class NewSkyStonePipeline extends OpenCvPipeline {
 				return cvRectangleOutput;
 			case 2:
 				return hsvThresholdOutput;
+			case 3:
+				try {
+					ArrayList<MatOfPoint> contours = convexHullsOutput;
+					MatOfPoint2f[] contoursPoly = new MatOfPoint2f[contours.size()];
+					drawnOutput = cvRectangleOutput;
+					try {
+						for (int i = 0; i < contours.size(); i++) {
+							contoursPoly[i] = new MatOfPoint2f();
+							Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contoursPoly[i], 3, true);
+							Rect r = Imgproc.boundingRect(new MatOfPoint(contoursPoly[i].toArray()));
+							cvRectangle(drawnOutput, r.tl(), r.br(), new Scalar(255.0, 0.0, 0.0, 0.0), 8, cvRectangleLinetype, cvRectangleShift, drawnOutput);
+						}
+						return drawnOutput;
+					} catch (IndexOutOfBoundsException e) {
+						e.printStackTrace();
+					}
+				} catch (ArrayIndexOutOfBoundsException e) {
+					e.printStackTrace();
+				}
+				return source0;
 			default:
 				return source0;
 
@@ -164,6 +206,66 @@ public class NewSkyStonePipeline extends OpenCvPipeline {
 		return convexHullsOutput;
 	}
 
+	enum BlurType{
+		BOX("Box Blur"), GAUSSIAN("Gaussian Blur"), MEDIAN("Median Filter"),
+		BILATERAL("Bilateral Filter");
+
+		private final String label;
+
+		BlurType(String label) {
+			this.label = label;
+		}
+
+		public static BlurType get(String type) {
+			if (BILATERAL.label.equals(type)) {
+				return BILATERAL;
+			}
+			else if (GAUSSIAN.label.equals(type)) {
+				return GAUSSIAN;
+			}
+			else if (MEDIAN.label.equals(type)) {
+				return MEDIAN;
+			}
+			else {
+				return BOX;
+			}
+		}
+
+		@Override
+		public String toString() {
+			return this.label;
+		}
+	}
+
+	/**
+	 * Softens an image using one of several filters.
+	 * @param input The image on which to perform the blur.
+	 * @param type The blurType to perform.
+	 * @param doubleRadius The radius for the blur.
+	 * @param output The image in which to store the output.
+	 */
+	private void blur(Mat input, BlurType type, double doubleRadius,
+					  Mat output) {
+		int radius = (int)(doubleRadius + 0.5);
+		int kernelSize;
+		switch(type){
+			case BOX:
+				kernelSize = 2 * radius + 1;
+				Imgproc.blur(input, output, new Size(kernelSize, kernelSize));
+				break;
+			case GAUSSIAN:
+				kernelSize = 6 * radius + 1;
+				Imgproc.GaussianBlur(input,output, new Size(kernelSize, kernelSize), radius);
+				break;
+			case MEDIAN:
+				kernelSize = 2 * radius + 1;
+				Imgproc.medianBlur(input, output, kernelSize);
+				break;
+			case BILATERAL:
+				Imgproc.bilateralFilter(input, output, -1, radius, radius);
+				break;
+		}
+	}
 
 	/**
 	 * Fills a point with given x and y values.
@@ -202,13 +304,14 @@ public class NewSkyStonePipeline extends OpenCvPipeline {
 	 * @param input The image on which to perform the HSL threshold.
 	 * @param hue The min and max hue
 	 * @param sat The min and max saturation
-	 * @param val The min and max value
+	 * @param lum The min and max lum
 	 */
-	private void hsvThreshold(Mat input, double[] hue, double[] sat, double[] val,
+	private void hsvThreshold(Mat input, double[] hue, double[] sat, double[] lum,
 	    Mat out) {
-		Imgproc.cvtColor(input, out, Imgproc.COLOR_BGR2HSV);
-		Core.inRange(out, new Scalar(hue[0], sat[0], val[0]),
-			new Scalar(hue[1], sat[1], val[1]), out);
+		Imgproc.cvtColor(input,
+				out, Imgproc.COLOR_RGB2HLS);
+		Core.inRange(out, new Scalar(hue[0], lum[0], sat[0]),
+				new Scalar(hue[1], lum[1], sat[1]), out);
 	}
 
 	/**

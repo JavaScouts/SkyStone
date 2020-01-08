@@ -89,6 +89,11 @@ public class Hardware {
         Collec1.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec2.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         //STOP EVERYTHING
         moveRobot(0, 0, 0);
 

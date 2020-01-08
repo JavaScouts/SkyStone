@@ -1,31 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.vuforia.Image;
-import com.vuforia.PIXEL_FORMAT;
-import com.vuforia.Vuforia;
-
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.VisionUtils.NewSkyStonePipeline;
-import org.firstinspires.ftc.teamcode.VisionUtils.StonePipeline;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvInternalCamera;
-
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 @TeleOp(name="Skystone Recognition-O")
@@ -43,11 +29,11 @@ public class SkystoneRecognitionO extends LinearOpMode {
         newSkyStonePipeline.setView_source(1);
         webcam.setPipeline(newSkyStonePipeline);
         webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
-        waitForStart();
-
-        newSkyStonePipeline.setView_source(2);
-        while (opModeIsActive())
-        {
+        newSkyStonePipeline.setView_source(3);
+        boolean found = false;
+        ElapsedTime et = new ElapsedTime();
+        et.reset();
+        while (!isStopRequested() && !found) {
             try {
                 ArrayList<MatOfPoint> contours = newSkyStonePipeline.convexHullsOutput();
                 MatOfPoint2f[] contoursPoly = new MatOfPoint2f[contours.size()];
@@ -64,11 +50,21 @@ public class SkystoneRecognitionO extends LinearOpMode {
 
                 try {
                     telemetry.addData("Skystones found:", boundRect.length);
-                    for (int i = 0; i < boundRect.length; i++) {
-                        telemetry.addData("Left X, " + i, boundRect[i].x);
+                    if(boundRect.length == 0 && et.seconds() > 2.5) {
+                        telemetry.log().add("Skystone is in pos 3, 6.");
+                        found = true;
+                    } else {
+                        if(boundRect[0].x >= 200) {
+                            telemetry.log().add("Skystone is in pos 1, 4.");
+                            telemetry.log().add("Skystone x:" + boundRect[0].x);
+                            found = true;
+                        } else {
+                            telemetry.log().add("Skystone is in pos 2, 5.");
+                            found = true;
+                        }
                     }
                     telemetry.update();
-                    sleep(100);
+
                 } catch(NullPointerException e) {
                     e.printStackTrace();
                 }
@@ -76,6 +72,9 @@ public class SkystoneRecognitionO extends LinearOpMode {
                 e.printStackTrace();
             }
         }
+
+        webcam.stopStreaming();
+        waitForStart();
 
     }
 
