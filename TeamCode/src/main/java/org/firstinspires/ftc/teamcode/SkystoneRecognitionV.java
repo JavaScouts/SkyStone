@@ -15,6 +15,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
+@Disabled
 @TeleOp(name = "Skystone Recognition-V")
 public class SkystoneRecognitionV extends LinearOpMode {
 

@@ -68,11 +68,11 @@ public class NewSkyStonePipeline extends OpenCvPipeline {
 		double cvRectangleShift = 0.0;
 		cvRectangle(cvRectangleSrc, cvRectanglePt1, cvRectanglePt2, cvRectangleColor, cvRectangleThickness, cvRectangleLinetype, cvRectangleShift, cvRectangleOutput);
 
-		newPoint0X = 500.0;
+		newPoint0X = 20.0;
 		newPoint0Y = -50.0;
 		newPoint(newPoint0X, newPoint0Y, newPoint0Output);
 
-		newPoint1X = 600.0;
+		newPoint1X = 570.0;
 		newPoint1Y = 500.0;
 		newPoint(newPoint1X, newPoint1Y, newPoint1Output);
 

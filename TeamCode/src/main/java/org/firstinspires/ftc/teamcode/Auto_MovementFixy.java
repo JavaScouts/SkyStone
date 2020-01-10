@@ -41,7 +41,7 @@ public class Auto_MovementFixy extends BaseAutonomous {
             rot *= 0.01745;
 
             // vars for following eqs
-            double max_achievable_velocity = 0; //TODO put in result from max_speed test of vel
+            double max_achievable_velocity = 36; //TODO put in result from max_speed test of vel
             double CPR = 85.56;
             double OneOverR = 1 / 0.075/2;
             double LxPlusLy = 0.3429;
@@ -99,6 +99,7 @@ public class Auto_MovementFixy extends BaseAutonomous {
             while   (opModeIsActive() &&
                     (l.isBusy() || r.isBusy() || bl.isBusy() || br.isBusy()) &&
                     (runtime.seconds() < finishIn + bufferS)) {
+
 
                 telemetry.addLine("We goin");
                 telemetry.addData("Powers", "Vel are %7f : %7f : %7f : %7f", Wl, Wr, Wbl, Wbr);
