@@ -73,7 +73,6 @@ final int RED_LED_CHANNEL = 1;
     dim = hardwareMap.get(DeviceInterfaceModule.class, "dim");   //  Use generic form of device mapping
     digIn  = hardwareMap.get(DigitalChannel.class, "digin");     //  Use generic form of device mapping
     digOut = hardwareMap.get(DigitalChannel.class, "digout");    //  Use generic form of device mapping
-
     digIn.setMode(DigitalChannel.Mode.INPUT);          // Set the direction of each channel
     digOut.setMode(DigitalChannel.Mode.OUTPUT);
 
