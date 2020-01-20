@@ -1,12 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.lang.annotation.Documented;
 
+@Disabled
+@Deprecated
 @Autonomous(name = "Move Better")
 public class Auto_MovementFix extends BaseAutonomous {
 

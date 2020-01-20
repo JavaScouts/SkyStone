@@ -85,7 +85,7 @@ public class Hardware {
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         backLDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         rightDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        backRDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec1.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec2.setDirection(DcMotorSimple.Direction.REVERSE);
 
