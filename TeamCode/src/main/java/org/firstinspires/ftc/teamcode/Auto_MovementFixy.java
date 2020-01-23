@@ -8,8 +8,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.BaseAutonomous;
 
-@Disabled
-@Deprecated
 @Autonomous(name = "Move Better W/ Vel")
 public class Auto_MovementFixy extends BaseAutonomous {
 
@@ -30,7 +28,7 @@ public class Auto_MovementFixy extends BaseAutonomous {
         r0 = (DcMotorEx) r;
         bl0 = (DcMotorEx) bl;
         br0 = (DcMotorEx) br;
-        okWeReallyGonnaDriveToPointNow(5,18,0,0,5);
+        okWeReallyGonnaDriveToPointNow(3,24,0,0,5);
 
     }
 
@@ -38,14 +36,13 @@ public class Auto_MovementFixy extends BaseAutonomous {
 
         if (opModeIsActive()) {
 
-            // convert in to m, deg to rad
+            // convert in to m
             x /= 39.3701;
             y /= 39.3701;
-            rot *= 0.01745;
 
             // vars for following eqs
-            double max_achievable_velocity = 36; //TODO put in result from max_speed test of vel
-            double CPR = 85.56;
+            double max_achievable_velocity = 4.7; //TODO put in result from max_speed test of vel
+            double CPR = 145.6 / PI;
             double OneOverR = 1 / 0.075/2;
             double LxPlusLy = 0.3429;
             double Vx = x * finishIn;
@@ -68,7 +65,7 @@ public class Auto_MovementFixy extends BaseAutonomous {
             r_count += r0.getCurrentPosition();
             bl_count += bl0.getCurrentPosition();
             br_count += br0.getCurrentPosition();
-
+/*
             // calculate power per motor
             double maxf = Math.max(Math.abs(Wl), Math.abs(Wr));
             double maxb = Math.max(Math.abs(Wbl), Math.abs(Wbr));
@@ -84,7 +81,7 @@ public class Auto_MovementFixy extends BaseAutonomous {
                 telemetry.addLine("We can't move fast enough.");
                 telemetry.addLine("But we try anyway.");
                 telemetry.update();
-            }
+            }*/
 
             l0.setTargetPosition((int) l_count);
             r0.setTargetPosition((int) r_count);

@@ -82,9 +82,9 @@ public class Hardware {
         color2 = map.get(ModernRoboticsI2cColorSensor.class,"cr");
 
         //reverse nessecary motors
-        leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
-        backLDrive.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         backRDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec1.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec2.setDirection(DcMotorSimple.Direction.REVERSE);

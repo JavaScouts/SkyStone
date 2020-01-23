@@ -13,8 +13,6 @@ import org.firstinspires.ftc.teamcode.Hardware;
 
 import java.util.ArrayList;
 
-@Deprecated
-@Disabled
 @TeleOp(name = "Max Speed Test")
 public class MaxSpeedTest extends LinearOpMode {
 
@@ -49,7 +47,7 @@ public class MaxSpeedTest extends LinearOpMode {
             for (DcMotorEx motor : motors) {
 
                 double v = motor.getVelocity(AngleUnit.RADIANS);
-                telemetry.addData(motor.getDeviceName(), v);
+                telemetry.addData(String.valueOf(motor.getPortNumber()), v);
                 if(v > max_speed) {
                     max_speed = v;
                 }
