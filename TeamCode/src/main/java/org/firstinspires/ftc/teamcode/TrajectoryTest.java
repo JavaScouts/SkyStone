@@ -2,12 +2,12 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name = "yutfyjngffgndytgk")
-public class Auto_B1_New extends BaseTrajectory {
+@Autonomous(name = "RIP KOBE")
+public class TrajectoryTest extends BaseTrajectory {
 
     @Override
     public boolean setDriveOnly() {
-        return false;
+        return true;
     }
 
     @Override
@@ -17,17 +17,8 @@ public class Auto_B1_New extends BaseTrajectory {
 
                 // start pos
                 new Pose(0, 0, 0),
-                // skystone pos (placeholder) -- move 1
-                new Pose(0, 0, 0),
-                // move around the center -- move 2
-                new Pose(30, 30,0)  .convertIntoM(),
-                // move around the center -- move 3
-                new Pose(50,30,0)   .convertIntoM(),
-                // move foundation -- move4
-                new Pose(60,6,-PI/4).convertIntoM(),
-                // park -- move 5
-                new Pose(30,30, 0)  .convertIntoM()
-
+                // move 1
+                new Pose(20, 0, PI/4).convertIntoM()
         };
 
     }
@@ -38,16 +29,7 @@ public class Auto_B1_New extends BaseTrajectory {
         return new double[]{
 
                 //move 1
-                3,
-                //move 2
-                3,
-                //move 3
-                3,
-                //move 4
-                5,
-                //move 5
                 3
-
         };
 
     }
@@ -69,7 +51,5 @@ public class Auto_B1_New extends BaseTrajectory {
         };
 
     }
-
-
 
 }

@@ -47,9 +47,9 @@ public class WhereWeAt extends LinearOpMode {
             h.manualDrive(1.0);
             h.moveRobot();
             af = where(af);
-            Px = df.format(af[5] * 39.37);
-            Py = df.format(af[6] * 39.37);
-            Pt = df.format(af[7] * 39.37);
+            Px = df.format(af[5]);
+            Py = df.format(af[6]);
+            Pt = df.format(af[7]);
             telemetry.addData("Positions", "X:[+"+Px+"]  Y:[+"+Py+"]  T:[+"+Pt+"]");
             telemetry.update();
         }
@@ -86,11 +86,11 @@ public class WhereWeAt extends LinearOpMode {
             change[i] /= dt;
         }
 
-        Vx = (change[0] + change[1] + change[2] + change[3]) * (0.0375 / 4);
-        Vy = (-change[0] + change[1] + change[2] - change[3]) * (0.0375 / 4);
-        Vt = (-change[0] + change[1] - change[2] + change[3]) * (0.0375 / (4 * 0.3429));
+        Vx = (change[0] + change[1] + change[2] + change[3]) * (0.0375 / 4) * 39.37;
+        Vy = (-change[0] + change[1] + change[2] - change[3]) * (0.0375 / 4) * 39.37;
+        Vt = (-change[0] + change[1] - change[2] + change[3]) * (0.0375 / (4 * 0.3429)) * 39.37;
 
-        telemetry.addData("Velocities","X:[+"+df.format(Vx * 39.37)+"]  Y:[+"+df.format(Vy * 39.37)+"]  T:[+"+df.format(Vt * 39.37)+"]");
+        telemetry.addData("Velocities","X:[+"+df.format(Vx)+"]  Y:[+"+df.format(Vy)+"]  T:[+"+df.format(Vt)+"]");
         //System.out.println("V: "+Vx+" | "+Vy+" | "+Vt+"");
 
         out[7] += dt * Vt;

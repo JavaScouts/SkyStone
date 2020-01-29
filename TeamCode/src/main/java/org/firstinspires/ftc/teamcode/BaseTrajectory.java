@@ -28,6 +28,7 @@ public abstract class BaseTrajectory extends LinearOpMode {
     Pose[] p = new Pose[]{};
     Pose[] sp = new Pose[]{};
     double[] timings = new double[]{};
+    boolean drive_only = true;
 
     private Hardware h = new Hardware();
     private static DecimalFormat df = new DecimalFormat("0.000");
@@ -44,80 +45,89 @@ public abstract class BaseTrajectory extends LinearOpMode {
     abstract Pose[] setPoses();
     abstract double[] setTimings();
     abstract Pose[] setStonePoses();
+    abstract boolean setDriveOnly();
 
     @Override
     public void runOpMode() {
 
+        drive_only = setDriveOnly();
         p = setPoses();
         timings = setTimings();
         sp = setStonePoses();
+
         h.init(hardwareMap, this);
         h.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         h.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-        webcam.openCameraDevice();
-        newSkyStonePipeline = new NewSkyStonePipeline();
-        newSkyStonePipeline.setView_source(1);
-        webcam.setPipeline(newSkyStonePipeline);
-        webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
-        newSkyStonePipeline.setView_source(3);
-        boolean found = false;
-        ElapsedTime et = new ElapsedTime();
-        et.reset();
-        while (!isStopRequested() && !found) {
-            try {
-                try {
-                    ArrayList<MatOfPoint> contours = newSkyStonePipeline.convexHullsOutput();
-                    MatOfPoint2f[] contoursPoly = new MatOfPoint2f[contours.size()];
-                    Rect[] boundRect = new Rect[contours.size()];
-                    try {
-                        for (int i = 0; i < contours.size(); i++) {
-                            contoursPoly[i] = new MatOfPoint2f();
-                            Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contoursPoly[i], 3, true);
-                            boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contoursPoly[i].toArray()));
-                        }
-                    } catch (IndexOutOfBoundsException e) {
-                        e.printStackTrace();
-                    }
 
-                    if (boundRect.length == 0 && et.seconds() > 2.5) {
+        if (!drive_only) {
+            int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+            webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+            webcam.openCameraDevice();
+            newSkyStonePipeline = new NewSkyStonePipeline();
+            newSkyStonePipeline.setView_source(1);
+            webcam.setPipeline(newSkyStonePipeline);
+            webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
+            newSkyStonePipeline.setView_source(3);
+            boolean found = false;
+            ElapsedTime et = new ElapsedTime();
+            et.reset();
+            while (!isStopRequested() && !found) {
+                try {
+                    try {
+                        ArrayList<MatOfPoint> contours = newSkyStonePipeline.convexHullsOutput();
+                        MatOfPoint2f[] contoursPoly = new MatOfPoint2f[contours.size()];
+                        Rect[] boundRect = new Rect[contours.size()];
+                        try {
+                            for (int i = 0; i < contours.size(); i++) {
+                                contoursPoly[i] = new MatOfPoint2f();
+                                Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contoursPoly[i], 3, true);
+                                boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contoursPoly[i].toArray()));
+                            }
+                        } catch (IndexOutOfBoundsException e) {
+                            e.printStackTrace();
+                        }
+
+                        if (boundRect.length == 0 && et.seconds() > 2.5) {
 //                        telemetry.log().add("Skystone is in pos 3, 6.");
-                        stone = 3;
-                        found = true;
-                    } else {
-                        telemetry.log().add("Skystone x:" + boundRect[0].x);
-                        if (boundRect[0].x > 217) {
-//                            telemetry.log().add("Skystone is in pos 1, 4.");
-                            stone = 1;
+                            stone = 3;
                             found = true;
                         } else {
+                            telemetry.log().add("Skystone x:" + boundRect[0].x);
+                            if (boundRect[0].x > 217) {
+//                            telemetry.log().add("Skystone is in pos 1, 4.");
+                                stone = 1;
+                                found = true;
+                            } else {
 //                            telemetry.log().add("Skystone is in pos 2, 5.");
-                            stone = 2;
-                            found = true;
+                                stone = 2;
+                                found = true;
+                            }
                         }
-                    }
 
-                } catch (NullPointerException e) {
+                    } catch (NullPointerException e) {
+                        e.printStackTrace();
+                    }
+                } catch (ArrayIndexOutOfBoundsException e) {
                     e.printStackTrace();
                 }
-            } catch (ArrayIndexOutOfBoundsException e) {
-                e.printStackTrace();
             }
+            webcam.stopStreaming();
+            webcam.closeCameraDevice();
         }
-        webcam.stopStreaming();
-        webcam.closeCameraDevice();
+
         waitForStart();
         telemetry.log().clear();
 
-        if(stone == 1) {
-            p[1] = sp[0];
-        } else if(stone == 2) {
-            p[1] = sp[1];
-        } else if(stone == 3) {
-            p[1] = sp[2];
-        } else {
-            p[0] = new Pose(0, 0, 0);
+        if(!drive_only) {
+            if (stone == 1) {
+                p[1] = sp[0];
+            } else if (stone == 2) {
+                p[1] = sp[1];
+            } else if (stone == 3) {
+                p[1] = sp[2];
+            } else {
+                p[0] = new Pose(0, 0, 0);
+            }
         }
 
         TrajectoryFollower tf = new TrajectoryFollower(
@@ -348,9 +358,11 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
         void convertVelocityToWheelVelocities(Pose vel) {
 
+            double W = vel.t;
             double Vx = vel.x;
             double Vy = vel.y;
-            double W = vel.t;
+//            double Vx = (vel.x * Math.cos(W)) - (vel.y * Math.sin(W));
+//            double Vy = (vel.x * Math.sin(W)) + (vel.y * Math.cos(W));
             double OneOverR = 1 / 0.075/2;
             double LxPlusLy = 0.3429;
 
@@ -380,6 +392,7 @@ public abstract class BaseTrajectory extends LinearOpMode {
         Trajectory(Pose start_, Pose end_, double time) {
             start = start_;
             end = end_;
+//            end.changeFrame();
             tf = time;
         }
 
@@ -416,15 +429,15 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
             double a = (6 * (end.x - start.x))/Math.pow(tf, 2);
             double b = (6 * (start.x - end.x))/Math.pow(tf, 3);
-            double x = (a * t) + (b * Math.pow(t, 2));
+            double x = (a * t) + (b * t * t);
 
             a = (6 * (end.y - start.y))/Math.pow(tf, 2);
             b = (6 * (start.y - end.y))/Math.pow(tf, 3);
-            double y = (a * t) + (b * Math.pow(t, 2));
+            double y = (a * t) + (b * t * t);
 
             a = (6 * (end.t - start.t))/Math.pow(tf, 2);
             b = (6 * (start.t - end.t))/Math.pow(tf, 3);
-            double theta = (a * t) + (b * Math.pow(t, 2));
+            double theta = (a * t) + (b * t * t);
 
             return new Pose(x, y, theta);
 
@@ -443,6 +456,11 @@ public abstract class BaseTrajectory extends LinearOpMode {
             x = x_;
             y = y_;
             t = t_;
+        }
+
+        void changeFrame() {
+            x = (x * Math.cos(t)) - (y * Math.sin(t));
+            y = (x * Math.sin(t)) + (y * Math.cos(t));
         }
 
         Pose convertMtoIn() {
