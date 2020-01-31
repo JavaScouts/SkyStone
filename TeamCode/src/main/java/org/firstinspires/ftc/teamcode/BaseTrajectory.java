@@ -392,7 +392,26 @@ public abstract class BaseTrajectory extends LinearOpMode {
         Trajectory(Pose start_, Pose end_, double time) {
             start = start_;
             end = end_;
-//            end.changeFrame();
+            if(end.t != start.t) {
+
+                double x0 = start.x;
+                double x1 = end.x;
+                double y0 = start.y;
+                double y1 = end.y;
+                double x = x1 - x0;
+                double y = y1 - y0;
+                double chord = Math.sqrt(x * x + y * y);
+                double t = end.t - start.t;
+                double outer = PI - (2 * t);
+                double inner = PI - PI/2 - outer/2;
+                double radius = (chord / 2) / Math.sin(inner / 2);
+                double arclength = (inner * radius);
+                telemetry.log().add("arc len"+arclength);
+                double offset = arclength - chord;
+                end.x += offset;
+                end.y += offset;
+
+            }
             tf = time;
         }
 
@@ -427,17 +446,21 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
         Pose getVelocity(double t) {
 
-            double a = (6 * (end.x - start.x))/Math.pow(tf, 2);
-            double b = (6 * (start.x - end.x))/Math.pow(tf, 3);
+            double a = (6 * (end.t - start.t))/Math.pow(tf, 2);
+            double b = (6 * (start.t - end.t))/Math.pow(tf, 3);
+            double theta = (a * t) + (b * t * t);
+
+            a = (6 * (end.x - start.x))/Math.pow(tf, 2);
+            b = (6 * (start.x - end.x))/Math.pow(tf, 3);
             double x = (a * t) + (b * t * t);
 
             a = (6 * (end.y - start.y))/Math.pow(tf, 2);
             b = (6 * (start.y - end.y))/Math.pow(tf, 3);
             double y = (a * t) + (b * t * t);
-
-            a = (6 * (end.t - start.t))/Math.pow(tf, 2);
-            b = (6 * (start.t - end.t))/Math.pow(tf, 3);
-            double theta = (a * t) + (b * t * t);
+/*
+            double derivCoeff = 1.0 / Math.sqrt(x * x + y * y);
+            y *= theta * derivCoeff;
+            x *= theta * derivCoeff;*/
 
             return new Pose(x, y, theta);
 
