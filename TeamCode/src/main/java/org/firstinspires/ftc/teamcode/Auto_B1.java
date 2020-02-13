@@ -4,6 +4,7 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -24,6 +25,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
+@Disabled
+@Deprecated
 @Autonomous(name="(Blue1)  >1Stone>Deliver>Park", group="b_final")
 public class Auto_B1 extends BaseAutonomous {
 
@@ -35,11 +38,8 @@ public class Auto_B1 extends BaseAutonomous {
     @Override
     public void after_start() {
 
-        h.small.setPosition(0.1);
-        h.big.setPosition(0.05);
-        h.push_block_further_in_to_placer.setPosition(0);
-        h.hookRight.setPosition(0);
-        h.hookLeft.setPosition(0);
+        h.grabClaw.setPosition(0.4);
+        h.grabArm.setPosition(0.0);
         driveToPoint(0.51, 0, -44, 0, 10);
         gyroTurn(0.51,0);
         sleep(50);

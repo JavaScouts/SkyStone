@@ -29,6 +29,8 @@ public class Hardware {
     Servo small;
     Servo big;
     Servo push_block_further_in_to_placer;
+    Servo grabArm;
+    Servo grabClaw;
 
     ModernRoboticsI2cGyro gyro;
     Rev2mDistanceSensor range;
@@ -76,6 +78,8 @@ public class Hardware {
         push_block_further_in_to_placer = map.servo.get("pb");
         small = map.servo.get("small");
         big = map.servo.get("big");
+        grabArm = map.servo.get("ga");
+        grabClaw = map.servo.get("gc");
         range = map.get(Rev2mDistanceSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
         color = map.get(ModernRoboticsI2cColorSensor.class, "c");
@@ -94,6 +98,7 @@ public class Hardware {
         backLDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //STOP EVERYTHING
         moveRobot(0, 0, 0);
 

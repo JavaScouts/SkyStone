@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -22,42 +24,61 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
+import static org.firstinspires.ftc.teamcode.BaseAutonomous.map;
+
 public abstract class BaseTrajectory extends LinearOpMode {
 
     static final double PI = Math.PI;
     Pose[] p = new Pose[]{};
     Pose[] sp = new Pose[]{};
     double[] timings = new double[]{};
-    boolean drive_only = true;
+    ArrayList<Integer> used = new ArrayList<>(6);
+    boolean drive_only = false;
 
     private Hardware h = new Hardware();
+    private Pose startPose = new Pose(0, 0, 0);
+    private Wheels constantWheels;
     private static DecimalFormat df = new DecimalFormat("0.000");
     private ElapsedTime e = new ElapsedTime();
     private double dt;
-    private double KP = 1.4;
-    private double KI = 0;
-    private double KD = 0;
+    private ModernRoboticsI2cGyro g;
+    private double KP = 40;
+    private double KI = 0.0;
+    private double KD = 0.0;
     OpenCvCamera webcam;
     NewSkyStonePipeline newSkyStonePipeline;
     int stone = -1;
 
     //customizable
-    abstract Pose[] setPoses();
-    abstract double[] setTimings();
-    abstract Pose[] setStonePoses();
-    abstract boolean setDriveOnly();
+    abstract void afterRun();
 
     @Override
     public void runOpMode() {
 
-        drive_only = setDriveOnly();
-        p = setPoses();
-        timings = setTimings();
-        sp = setStonePoses();
+        beforeRun();
+        afterRun();
+
+    }
+
+    void beforeRun() {
 
         h.init(hardwareMap, this);
         h.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         h.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        g = h.gyro;
+
+        g.calibrate();
+
+        while (!isStopRequested() && g.isCalibrating()) {
+            telemetry.addData("calibrating", "%s", Math.round(e.seconds()) % 2 == 0 ? "|.." : "..|");
+            telemetry.update();
+            sleep(6);
+        }
+
+        constantWheels = new Wheels(h.leftDrive,
+                                    h.rightDrive,
+                                    h.backLDrive,
+                                    h.backRDrive);
 
         if (!drive_only) {
             int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -115,32 +136,105 @@ public abstract class BaseTrajectory extends LinearOpMode {
             webcam.closeCameraDevice();
         }
 
+        telemetry.log().add("ready ..." + stone);
         waitForStart();
         telemetry.log().clear();
 
-        if(!drive_only) {
-            if (stone == 1) {
-                p[1] = sp[0];
-            } else if (stone == 2) {
-                p[1] = sp[1];
-            } else if (stone == 3) {
-                p[1] = sp[2];
-            } else {
-                p[0] = new Pose(0, 0, 0);
-            }
+    }
+    public double getError(double targetAngle) {
+
+        double robotError;
+
+        // calculate error in -179 to +180 range  (
+        robotError = targetAngle - g.getIntegratedZValue();
+        while (robotError > 180) robotError -= 360;
+        while (robotError <= -180) robotError += 360;
+        return robotError;
+    }
+
+
+    void moveRelative(double x, double y, double rot, double time) {
+
+        Trajectory toFollow = new Trajectory(startPose,
+                                             new Pose(x, y, rot).convertIntoM(),
+                                             time);
+
+        double[] a = new double[]{0, 0, 0, 0, 0, 0, 0, 0};
+        telemetry.log().add("Starting at [%7f] [%7f] [%7f]", toFollow.start.x, toFollow.start.y, toFollow.start.t);
+        e.reset();
+        double endtime = toFollow.tf;
+        double cur = e.seconds();
+        Pose velocity;
+        double err = 0;
+        double prev_err = 0;
+        double integral = 0;
+        double derivative = 0;
+        double output = 0;
+        dt = 0;
+        double prev = 0;
+        while(cur < endtime && opModeIsActive()) {
+
+            a = where(a);
+            cur = e.seconds();
+            dt = cur - prev;
+            velocity = toFollow.getVelocity(cur);
+            constantWheels.convertVelocityToWheelVelocities(velocity);
+            telemetry.addData("Current vel target", "x:[%7f] y:[%7f] t:[%7f]",velocity.x, velocity.y, velocity.t);
+            telemetry.addData("Current vel estimate", "x:[%7f] y:[%7f] t:[%7f]",a[5], a[6], a[7]);
+            telemetry.addData("Current wheel target", "[%7f] [%7f] [%7f] [%7f]", constantWheels.l, constantWheels.r, constantWheels.bl, constantWheels.br);
+
+            err = getError(rot);
+            err = map(err, -180, 180, -1, 1);
+            integral = integral + (err * dt);
+            derivative = (err - prev_err) / dt;
+            output = (KP * err) + (KI * integral) + (KD * derivative);
+            telemetry.addData("output",output);
+            //output = map(output, -max_error, max_error, -adj, adj);
+            //telemetry.addData("adjust_output",output);
+            prev_err = err;
+            telemetry.addData("p", err);
+            telemetry.addData("i", integral);
+            telemetry.addData("d", derivative);
+            telemetry.update();
+
+            constantWheels.adjust(output);
+            constantWheels.startMotors();
+
+            telemetry.addData("Current wheel target", "[%7f] [%7f] [%7f] [%7f]", constantWheels.l, constantWheels.r, constantWheels.bl, constantWheels.br);
+
+            telemetry.update();
+            prev = cur;
+
         }
 
-        TrajectoryFollower tf = new TrajectoryFollower(
-                p,
-                timings,
-                new Wheels(h.leftDrive, h.rightDrive, h.backLDrive, h.backRDrive));
-        tf.buildTrajectories();
-
-        waitForStart();
-
-        tf.run();
+        constantWheels.stopMotors();
 
     }
+
+    void grab_stone() {
+        h.grabArm.setPosition(0.8);
+        h.grabClaw.setPosition(1);
+        sleep(650);
+    }
+
+    void raise_stone() {
+        h.grabArm.setPosition(0.2);
+        sleep(700);
+    }
+
+    void drop_stone() {
+        h.grabArm.setPosition(0.5);
+        h.grabClaw.setPosition(0.35);
+        sleep(400);
+        h.grabArm.setPosition(0);
+        sleep(400);
+    }
+    void ready_arm() {
+        h.grabClaw.setPosition(0.2);
+        h.grabArm.setPosition(0.71);
+        sleep(500);
+    }
+
 
     public double[] where(double[] prev) {
 
@@ -213,21 +307,18 @@ public abstract class BaseTrajectory extends LinearOpMode {
             for(int i = 0; i < trajectories.length; i++) {
 
                 trajectories[i] = new Trajectory(poses[i], poses[i+1], timings[i]);
+                telemetry.log().add("point:" + poses[i].x + ", " + poses[i].y);
 
             }
         }
 
         void run() {
 
+            telemetry.log().clear();
             double[] a = new double[]{0, 0, 0, 0, 0, 0, 0, 0};
 
             for(int i = 0; i < trajectories.length; i++) {
 
-                if(i != 0) {
-                    double ang = trajectories[i-1].end.t;
-                    trajectories[i].start.x = (trajectories[i-1].end.x * Math.cos(ang)) - (trajectories[i-1].end.y * Math.sin(ang));
-                    trajectories[i].start.y = (trajectories[i-1].end.x * Math.sin(ang)) + (trajectories[i-1].end.y * Math.cos(ang));
-                }
                 telemetry.log().add("Starting at [%7f] [%7f] [%7f]", trajectories[i].start.x, trajectories[i].start.y, trajectories[i].start.t);
                 e.reset();
                 double endtime = trajectories[i].tf;
@@ -246,10 +337,12 @@ public abstract class BaseTrajectory extends LinearOpMode {
                     telemetry.update();
 
                 }
+
                 wheels.stopMotors();
             }
 
         }
+
         void runPidCorrected() {
 
             double[] a = new double[]{0, 0, 0, 0, 0, 0, 0, 0};
@@ -350,11 +443,18 @@ public abstract class BaseTrajectory extends LinearOpMode {
         void startMotors() {
 
             lm.setVelocity(l, AngleUnit.RADIANS);
+            brm.setVelocity(br, AngleUnit.RADIANS);
             rm.setVelocity(r, AngleUnit.RADIANS);
             blm.setVelocity(bl, AngleUnit.RADIANS);
-            brm.setVelocity(br, AngleUnit.RADIANS);
 
         }
+        void adjust(double output) {
+            l -= output;
+            br += output;
+            r += output;
+            bl -= output;
+        }
+
 
         void convertVelocityToWheelVelocities(Pose vel) {
 
@@ -474,12 +574,34 @@ public abstract class BaseTrajectory extends LinearOpMode {
         public double x;
         public double y;
         public double t;
+        public String info = "";
+        public int pos = 0;
 
         Pose(double x_, double y_, double t_) {
             x = x_;
             y = y_;
             t = t_;
         }
+
+        Pose(String info_) {
+            info = info_;
+        }
+
+        Pose(double x_, double y_, double t_, String info_) {
+            info = info_;
+            x = x_;
+            y = y_;
+            t = t_;
+        }
+
+        Pose(double x_, double y_, double t_, String info_, int pos_) {
+            info = info_;
+            pos = pos_;
+            x = x_;
+            y = y_;
+            t = t_;
+        }
+
 
         void changeFrame() {
             x = (x * Math.cos(t)) - (y * Math.sin(t));
