@@ -1,14 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.GyroSensor;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -23,8 +19,6 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-
-import static org.firstinspires.ftc.teamcode.BaseAutonomous.map;
 
 public abstract class BaseTrajectory extends LinearOpMode {
 
@@ -42,7 +36,8 @@ public abstract class BaseTrajectory extends LinearOpMode {
     private ElapsedTime e = new ElapsedTime();
     private double dt;
     private ModernRoboticsI2cGyro g;
-    private double KP = 40;
+    private double KPT = 40;
+    private double KPM = 1;
     private double KI = 0.0;
     private double KD = 0.0;
     OpenCvCamera webcam;
@@ -170,9 +165,12 @@ public abstract class BaseTrajectory extends LinearOpMode {
         double integral = 0;
         double derivative = 0;
         double output = 0;
+        double output1 = 0;
+        double output2 = 0;
         dt = 0;
         double prev = 0;
-        while(cur < endtime && opModeIsActive()) {
+        boolean shouldEnd = false;
+        while((cur < endtime || shouldEnd) && opModeIsActive()) {
 
             a = where(a);
             cur = e.seconds();
@@ -181,13 +179,12 @@ public abstract class BaseTrajectory extends LinearOpMode {
             constantWheels.convertVelocityToWheelVelocities(velocity);
             telemetry.addData("Current vel target", "x:[%7f] y:[%7f] t:[%7f]",velocity.x, velocity.y, velocity.t);
             telemetry.addData("Current vel estimate", "x:[%7f] y:[%7f] t:[%7f]",a[5], a[6], a[7]);
-            telemetry.addData("Current wheel target", "[%7f] [%7f] [%7f] [%7f]", constantWheels.l, constantWheels.r, constantWheels.bl, constantWheels.br);
 
             err = getError(rot);
             err = map(err, -180, 180, -1, 1);
             integral = integral + (err * dt);
             derivative = (err - prev_err) / dt;
-            output = (KP * err) + (KI * integral) + (KD * derivative);
+            output = (KPT * err) + (KI * integral) + (KD * derivative);
             telemetry.addData("output",output);
             //output = map(output, -max_error, max_error, -adj, adj);
             //telemetry.addData("adjust_output",output);
@@ -195,9 +192,17 @@ public abstract class BaseTrajectory extends LinearOpMode {
             telemetry.addData("p", err);
             telemetry.addData("i", integral);
             telemetry.addData("d", derivative);
-            telemetry.update();
+
+            err = velocity.x - a[5];
+            output1 = (KPM * err);
+            err = velocity.y - a[6];
+            output2 = (KPM * err);
+            constantWheels.forwardAdd(output1);
+            constantWheels.strafeAdd(output2);
 
             constantWheels.adjust(output);
+            telemetry.addData("Current adjustments", "x:[%7f] y:[%7f] t:[%7f]",output1, output2, output);
+
             constantWheels.startMotors();
 
             telemetry.addData("Current wheel target", "[%7f] [%7f] [%7f] [%7f]", constantWheels.l, constantWheels.r, constantWheels.bl, constantWheels.br);
@@ -212,26 +217,26 @@ public abstract class BaseTrajectory extends LinearOpMode {
     }
 
     void grab_stone() {
-        h.grabArm.setPosition(0.8);
-        h.grabClaw.setPosition(1);
+        h.grabArm.setPosition(0.19);
+        h.grabClaw.setPosition(0);
         sleep(650);
     }
 
     void raise_stone() {
-        h.grabArm.setPosition(0.2);
+        h.grabArm.setPosition(0.75);
         sleep(700);
     }
 
     void drop_stone() {
-        h.grabArm.setPosition(0.5);
-        h.grabClaw.setPosition(0.35);
+        h.grabArm.setPosition(0.45);
+        h.grabClaw.setPosition(0.6);
         sleep(400);
-        h.grabArm.setPosition(0);
+        h.grabArm.setPosition(0.75);
         sleep(400);
     }
     void ready_arm() {
-        h.grabClaw.setPosition(0.2);
-        h.grabArm.setPosition(0.71);
+        h.grabClaw.setPosition(0.6);
+        h.grabArm.setPosition(0.3);
         sleep(500);
     }
 
@@ -384,16 +389,16 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
                     if(use_x_pid) {
                         err = velocity.x - a[5];
-                        output1 = (KP * err);
+                        output1 = (KPT * err);
                     }
                     if(use_y_pid) {
                         err = velocity.y - a[6];
-                        output2 = (KP * err);
+                        output2 = (KPT * err);
                     }
                     /*if(use_t_pid) {
                         //todo incorporate gyro sensor
                         err = velocity.t - a[7];
-                        output3 = (KP * err);
+                        output3 = (KPT * err);
                     }
 */
                     velocity.x += output1;
@@ -454,7 +459,18 @@ public abstract class BaseTrajectory extends LinearOpMode {
             r += output;
             bl -= output;
         }
-
+        void forwardAdd(double output){
+            l += output;
+            br += output;
+            r += output;
+            bl += output;
+        }
+        void strafeAdd(double output){
+            l -= output;
+            br -= output;
+            r += output;
+            bl += output;
+        }
 
         void convertVelocityToWheelVelocities(Pose vel) {
 
@@ -617,6 +633,8 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
     }
 
-
+    double map(double x, double min_a, double max_a, double min_b, double max_b) {
+        return (x - min_a) / (max_a - min_a) * (max_b - min_b) + min_b;
+    }
 
 }

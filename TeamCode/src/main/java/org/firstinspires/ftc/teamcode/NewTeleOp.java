@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -19,6 +20,8 @@ public class NewTeleOp extends LinearOpMode {
     DcMotor Collec1;
     DcMotor Collec2;
     DcMotor Rev;
+    CRServo p;
+    CRServo p1;
 
     double power = 0.4;
     double pos = 0;
@@ -46,6 +49,9 @@ public class NewTeleOp extends LinearOpMode {
 
         Collec1 = hardwareMap.dcMotor.get("c1");
         Collec2 = hardwareMap.dcMotor.get("c2");
+        p = hardwareMap.crservo.get("p");
+        p1 = hardwareMap.crservo.get("p1");
+
         Rev = robot.Rev;
 
         Collec1.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -128,6 +134,8 @@ public class NewTeleOp extends LinearOpMode {
             } else if (gamepad2.y){
                 robot.big.setPosition(0.6);
             }
+            p.setPower(1.0);
+            p1.setPower(-1.0);
 
             telemetry.addData("s servo",robot.small.getPosition());
             telemetry.addData("B servo", robot.big.getPosition());
@@ -182,9 +190,9 @@ public class NewTeleOp extends LinearOpMode {
             }
             lastResetState2 = curResetState2;
             if(smallmove) {
-                robot.small.setPosition(0.7);
+                robot.small.setPosition(0);
             } else {
-                robot.small.setPosition(0.1);
+                robot.small.setPosition(0.8);
             }
 
             curResetState3 = (gamepad2.right_bumper);

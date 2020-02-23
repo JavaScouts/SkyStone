@@ -33,7 +33,7 @@ public class Hardware {
     Servo grabClaw;
 
     ModernRoboticsI2cGyro gyro;
-    Rev2mDistanceSensor range;
+    ModernRoboticsI2cRangeSensor range;
     ModernRoboticsI2cColorSensor color;
     ModernRoboticsI2cColorSensor color2;
 
@@ -73,17 +73,14 @@ public class Hardware {
         Rev = map.dcMotor.get("rev");
         Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        hookLeft = map.servo.get("hl");
+        hookLeft = map.servo.get("found");
         hookRight = map.servo.get("found2");
-        push_block_further_in_to_placer = map.servo.get("pb");
         small = map.servo.get("small");
         big = map.servo.get("big");
         grabArm = map.servo.get("ga");
         grabClaw = map.servo.get("gc");
-        range = map.get(Rev2mDistanceSensor.class, "r");
+        range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
-        color = map.get(ModernRoboticsI2cColorSensor.class, "c");
-        color2 = map.get(ModernRoboticsI2cColorSensor.class,"cr");
 
         //reverse nessecary motors
         leftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -227,7 +224,7 @@ public class Hardware {
         }
 
         err = getError(angle);
-        err = BaseAutonomous.map(err, -180, 180, -1, 1);
+        err = map(err, -180, 180, -1, 1);
         integral = integral + (err * dt);
         derivative = (err - prev_err) / dt;
         output = (KP * err) + (KI * integral) + (KD * derivative);
@@ -284,6 +281,10 @@ public class Hardware {
             myOpMode.telemetry.update();
 
         }
+    }
+
+    double map(double x, double min_a, double max_a, double min_b, double max_b) {
+        return (x - min_a) / (max_a - min_a) * (max_b - min_b) + min_b;
     }
 
     Boolean onHeading(double speed, double angle, double PCoeff) {
