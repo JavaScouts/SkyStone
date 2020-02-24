@@ -70,10 +70,10 @@ public class NewTeleOp extends LinearOpMode {
                 multiplier = 1;
             }
 
-            /*if (gamepad1.right_stick_x == 0) {
+            if (gamepad1.right_stick_x == 0) {
                 robot.smartPower = 0;
                 telemetry.addLine("Smart Power resetting due to release of joystick.");
-            }*/
+            }
 
             robot.manualDrive(multiplier);
             if((notResting(gamepad1.left_stick_x) || notResting(gamepad1.left_stick_y)) && resting(gamepad1.right_stick_x)) {
@@ -92,7 +92,7 @@ public class NewTeleOp extends LinearOpMode {
                 hold_angle = robot.gyro.getHeading();
                 telemetry.addData("Changin angle:", hold_angle);
             }
-
+            robot.moveRobot();
 
             if(gamepad1.dpad_left) {
 
@@ -193,17 +193,6 @@ public class NewTeleOp extends LinearOpMode {
                 robot.small.setPosition(0);
             } else {
                 robot.small.setPosition(0.8);
-            }
-
-            curResetState3 = (gamepad2.right_bumper);
-            if (curResetState3 && !lastResetState3) {
-                block = !block;
-            }
-            lastResetState3 = curResetState3;
-            if(block) {
-                robot.push_block_further_in_to_placer.setPosition(0.4);
-            } else {
-                robot.push_block_further_in_to_placer.setPosition(0);
             }
 
             curResetState4 = (gamepad2.a);

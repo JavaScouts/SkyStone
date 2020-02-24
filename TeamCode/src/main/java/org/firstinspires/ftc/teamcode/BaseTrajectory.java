@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.VisionUtils.NewSkyStonePipeline;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -192,13 +193,15 @@ public abstract class BaseTrajectory extends LinearOpMode {
             telemetry.addData("p", err);
             telemetry.addData("i", integral);
             telemetry.addData("d", derivative);
+/*
 
             err = velocity.x - a[5];
             output1 = (KPM * err);
+            constantWheels.forwardAdd(output1);
             err = velocity.y - a[6];
             output2 = (KPM * err);
-            constantWheels.forwardAdd(output1);
             constantWheels.strafeAdd(output2);
+*/
 
             constantWheels.adjust(output);
             telemetry.addData("Current adjustments", "x:[%7f] y:[%7f] t:[%7f]",output1, output2, output);
@@ -216,28 +219,95 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
     }
 
+    void new_thread_command(final String value) {
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                switch(value) {
+                    case "GRAB":
+                        h.grabArm.setPosition(0.40);
+                        h.grabClaw.setPosition(0);
+                        sleep(650);
+                        break;
+                    case "RAISE":
+                        h.grabArm.setPosition(0.8);
+                        sleep(700);
+                        break;
+                    case "DROP":
+                        h.grabArm.setPosition(0.8);
+                        h.grabClaw.setPosition(0.6);
+                        sleep(400);
+                        break;
+                    case "READY":
+                        h.grabClaw.setPosition(0.6);
+                        h.grabArm.setPosition(0.45);
+                        sleep(500);
+                        break;
+
+                }
+            }
+        }).start();
+
+    }
+
     void grab_stone() {
-        h.grabArm.setPosition(0.19);
+        h.grabArm.setPosition(0.40);
         h.grabClaw.setPosition(0);
         sleep(650);
     }
 
     void raise_stone() {
-        h.grabArm.setPosition(0.75);
+        h.grabArm.setPosition(0.8);
         sleep(700);
     }
 
     void drop_stone() {
         h.grabArm.setPosition(0.45);
+        sleep(500);
         h.grabClaw.setPosition(0.6);
         sleep(400);
-        h.grabArm.setPosition(0.75);
-        sleep(400);
+        h.grabArm.setPosition(0.8);
     }
     void ready_arm() {
         h.grabClaw.setPosition(0.6);
-        h.grabArm.setPosition(0.3);
+        h.grabArm.setPosition(0.45);
         sleep(500);
+    }
+
+    void range_drive(double distance, double power) {
+
+        if(h.range.getDistance(DistanceUnit.INCH) < distance) {
+
+            h.leftDrive.setPower(-power);
+            h.backRDrive.setPower(-power);
+            h.rightDrive.setPower(power);
+            h.backLDrive.setPower(power);
+
+        } else if(h.range.getDistance(DistanceUnit.INCH) > distance) {
+
+            h.leftDrive.setPower(power);
+            h.backRDrive.setPower(power);
+            h.rightDrive.setPower(-power);
+            h.backLDrive.setPower(-power);
+
+        }
+
+        while(!within(h.range.getDistance(DistanceUnit.INCH), distance, 1) && opModeIsActive()) {
+
+            idle();
+
+        }
+
+        h.setPower(0);
+
+    }
+
+    boolean within(double val1, double val2, double thresh) {
+
+        return (val1 > val2 - thresh) &&
+                (val1 < val2 + thresh);
+
     }
 
 
