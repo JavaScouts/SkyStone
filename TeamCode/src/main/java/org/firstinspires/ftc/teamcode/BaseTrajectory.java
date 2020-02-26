@@ -38,9 +38,9 @@ public abstract class BaseTrajectory extends LinearOpMode {
     private double dt;
     private ModernRoboticsI2cGyro g;
     private double KPT = 40;
-    private double KPM = 1;
+    private double KPM = 0.5;
     private double KI = 0.0;
-    private double KD = 0.0;
+    private double KD = 0.5;
     OpenCvCamera webcam;
     NewSkyStonePipeline newSkyStonePipeline;
     int stone = -1;
@@ -150,6 +150,10 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
 
     void moveRelative(double x, double y, double rot, double time) {
+        moveRelative(x, y, rot, time, "");
+    }
+
+    void moveRelative(double x, double y, double rot, double time, String command) {
 
         Trajectory toFollow = new Trajectory(startPose,
                                              new Pose(x, y, rot).convertIntoM(),
@@ -170,16 +174,29 @@ public abstract class BaseTrajectory extends LinearOpMode {
         double output2 = 0;
         dt = 0;
         double prev = 0;
-        boolean shouldEnd = false;
-        while((cur < endtime || shouldEnd) && opModeIsActive()) {
-
+        boolean needsToEnd = false;
+        if(command.equals("HOLD CURRENT")) {
+            rot = g.getIntegratedZValue();
+        }
+        boolean shouldRange = false;
+        int range = 0;
+        if(command != "HOLD CURRENT" && command != "") {
+            shouldRange = true;
+            range = Integer.valueOf(command);
+        }
+        while(cur < endtime && !needsToEnd && opModeIsActive()) {
+            if(shouldRange) {
+                if (h.range.getDistance(DistanceUnit.INCH) < range) {
+                    needsToEnd = true;
+                }
+            }
             a = where(a);
             cur = e.seconds();
             dt = cur - prev;
             velocity = toFollow.getVelocity(cur);
             constantWheels.convertVelocityToWheelVelocities(velocity);
             telemetry.addData("Current vel target", "x:[%7f] y:[%7f] t:[%7f]",velocity.x, velocity.y, velocity.t);
-            telemetry.addData("Current vel estimate", "x:[%7f] y:[%7f] t:[%7f]",a[5], a[6], a[7]);
+            telemetry.addData("Current pos estimate", "x:[%7f] y:[%7f] t:[%7f]",a[5], a[6], a[7]);
 
             err = getError(rot);
             err = map(err, -180, 180, -1, 1);
@@ -194,14 +211,12 @@ public abstract class BaseTrajectory extends LinearOpMode {
             telemetry.addData("i", integral);
             telemetry.addData("d", derivative);
 /*
-
             err = velocity.x - a[5];
             output1 = (KPM * err);
             constantWheels.forwardAdd(output1);
             err = velocity.y - a[6];
             output2 = (KPM * err);
-            constantWheels.strafeAdd(output2);
-*/
+            constantWheels.strafeAdd(output2);*/
 
             constantWheels.adjust(output);
             telemetry.addData("Current adjustments", "x:[%7f] y:[%7f] t:[%7f]",output1, output2, output);
@@ -244,7 +259,10 @@ public abstract class BaseTrajectory extends LinearOpMode {
                         h.grabArm.setPosition(0.45);
                         sleep(500);
                         break;
-
+                    default:
+                        h.grabArm.setPosition(0.8);
+                        sleep(700);
+                        break;
                 }
             }
         }).start();
@@ -310,6 +328,25 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
     }
 
+    void curve_it(double desired_heading, double l_power, double r_power) {
+
+        double e = getError(desired_heading);
+        while(opModeIsActive() && e!=0 && e!=1 && e!=-1) {
+
+            e = getError(desired_heading);
+            h.leftDrive.setPower(l_power);
+            h.rightDrive.setPower(r_power);
+            h.backRDrive.setPower(r_power);
+            h.backLDrive.setPower(l_power);
+            telemetry.addData("g heading", g.getIntegratedZValue());
+            telemetry.addData("err", e);
+            telemetry.update();
+
+        }
+        h.setPower(0);
+
+    }
+
 
     public double[] where(double[] prev) {
 
@@ -345,20 +382,22 @@ public abstract class BaseTrajectory extends LinearOpMode {
         Vx = (change[0] + change[1] + change[2] + change[3]) * (0.0375 / 4);
         Vy = (-change[0] + change[1] + change[2] - change[3]) * (0.0375 / 4);
         Vt = (-change[0] + change[1] - change[2] + change[3]) * (0.0375 / (4 * 0.3429));
+/*
 
         out[5] = Vx;
         out[6] = Vy;
         out[7] = Vt;
+*/
 
 //        telemetry.addData("Velocities", "X:[+" + df.format(Vx * 39.37) + "]  Y:[+" + df.format(Vy * 39.37) + "]  T:[+" + df.format(Vt * 39.37) + "]");
-        //System.out.println("V: "+Vx+" | "+Vy+" | "+Vt+"");
+//        System.out.println("V: "+Vx+" | "+Vy+" | "+Vt+"");
 //        for positioning
-//        out[7] += dt * Vt;
-//        out[5] += dt * ((Vx * Math.cos(out[7])) - (Vy * Math.sin(out[7])));
-//        out[6] += dt * ((Vx * Math.sin(out[7])) + (Vy * Math.cos(out[7])));
+        out[7] += dt * Vt;
+        out[5] += dt * ((Vx * Math.cos(out[7])) - (Vy * Math.sin(out[7])));
+        out[6] += dt * ((Vx * Math.sin(out[7])) + (Vy * Math.cos(out[7])));
 
-        //System.out.println("P: "+out[5]+" | "+out[6]+" | "+out[7]+"");
-        //System.out.println(out[0]+" "+out[1]+" "+out[2]+" "+out[3]+" "+out[4]+" "+out[5]+" "+out[6]+" "+out[7]+"");
+//        System.out.println("P: "+out[5]+" | "+out[6]+" | "+out[7]+"");
+//        System.out.println(out[0]+" "+out[1]+" "+out[2]+" "+out[3]+" "+out[4]+" "+out[5]+" "+out[6]+" "+out[7]+"");
 
         return out;
     }

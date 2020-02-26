@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.VisionUtils.NewSkyStonePipeline;
@@ -15,7 +16,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
 
-@Autonomous(name="Align")
+@TeleOp(name="Align")
 public class Auto_CamViewer extends LinearOpMode {
 
     OpenCvCamera webcam;
@@ -32,10 +33,8 @@ public class Auto_CamViewer extends LinearOpMode {
         webcam.setPipeline(newSkyStonePipeline);
         webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
         telemetry.log().add("ready - press play");
-        waitForStart();
-        telemetry.log().clear();
 
-        while(opModeIsActive()) {
+        while(!isStopRequested() && !isStarted()) {
 
             try {
                 ArrayList<MatOfPoint> contours = newSkyStonePipeline.convexHullsOutput();
