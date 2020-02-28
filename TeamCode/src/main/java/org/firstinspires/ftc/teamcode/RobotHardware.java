@@ -277,7 +277,7 @@ public class RobotHardware {
 
         double robotError;
 
-        // calculate error in -179 to +180 range  (
+        // calculate error in -179 to +180 backRange  (
         robotError = targetAngle - gyro.getHeading();
         while (robotError > 180) robotError -= 360;
         while (robotError <= -180) robotError += 360;

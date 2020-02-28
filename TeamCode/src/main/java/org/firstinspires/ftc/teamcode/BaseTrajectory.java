@@ -15,6 +15,7 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraException;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
@@ -41,10 +42,10 @@ public abstract class BaseTrajectory extends LinearOpMode {
     private double KPM = 0.5;
     private double KI = 0.0;
     private double KD = 0.5;
-    OpenCvCamera webcam;
-    NewSkyStonePipeline newSkyStonePipeline;
-    int stone = -1;
 
+    LockObject lock;
+    int intermediateposition;
+    int stone = -1;
     //customizable
     abstract void afterRun();
 
@@ -57,6 +58,8 @@ public abstract class BaseTrajectory extends LinearOpMode {
     }
 
     void beforeRun() {
+
+        lock = new LockObject(-1);
 
         h.init(hardwareMap, this);
         h.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -77,63 +80,21 @@ public abstract class BaseTrajectory extends LinearOpMode {
                                     h.backRDrive);
 
         if (!drive_only) {
-            int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-            webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-            webcam.openCameraDevice();
-            newSkyStonePipeline = new NewSkyStonePipeline();
-            newSkyStonePipeline.setView_source(1);
-            webcam.setPipeline(newSkyStonePipeline);
-            webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
-            newSkyStonePipeline.setView_source(3);
-            boolean found = false;
-            ElapsedTime et = new ElapsedTime();
-            et.reset();
-            while (!isStopRequested() && !found) {
-                try {
-                    try {
-                        ArrayList<MatOfPoint> contours = newSkyStonePipeline.convexHullsOutput();
-                        MatOfPoint2f[] contoursPoly = new MatOfPoint2f[contours.size()];
-                        Rect[] boundRect = new Rect[contours.size()];
-                        try {
-                            for (int i = 0; i < contours.size(); i++) {
-                                contoursPoly[i] = new MatOfPoint2f();
-                                Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contoursPoly[i], 3, true);
-                                boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contoursPoly[i].toArray()));
-                            }
-                        } catch (IndexOutOfBoundsException e) {
-                            e.printStackTrace();
-                        }
-
-                        if (boundRect.length == 0 && et.seconds() > 2.5) {
-//                        telemetry.log().add("Skystone is in pos 3, 6.");
-                            stone = 3;
-                            found = true;
-                        } else {
-                            telemetry.log().add("Skystone x:" + boundRect[0].x);
-                            if (boundRect[0].x > 217) {
-//                            telemetry.log().add("Skystone is in pos 1, 4.");
-                                stone = 1;
-                                found = true;
-                            } else {
-//                            telemetry.log().add("Skystone is in pos 2, 5.");
-                                stone = 2;
-                                found = true;
-                            }
-                        }
-
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
-                    }
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    e.printStackTrace();
-                }
-            }
-            webcam.stopStreaming();
-            webcam.closeCameraDevice();
+            vision_thread(lock);
         }
 
-        telemetry.log().add("ready ..." + stone);
-        waitForStart();
+        while(!isStopRequested() && !isStarted()) {
+            synchronized (lock) {
+                intermediateposition = lock.result;
+            }
+            telemetry.addData("current result", intermediateposition);
+            telemetry.update();
+        }
+        synchronized (lock) {
+            lock.shouldEnd = true;
+        }
+        stone = intermediateposition;
+
         telemetry.log().clear();
 
     }
@@ -141,7 +102,7 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
         double robotError;
 
-        // calculate error in -179 to +180 range  (
+        // calculate error in -179 to +180 backRange  (
         robotError = targetAngle - g.getIntegratedZValue();
         while (robotError > 180) robotError -= 360;
         while (robotError <= -180) robotError += 360;
@@ -178,18 +139,25 @@ public abstract class BaseTrajectory extends LinearOpMode {
         if(command.equals("HOLD CURRENT")) {
             rot = g.getIntegratedZValue();
         }
-        boolean shouldRange = false;
-        int range = 0;
+        /*boolean shouldRange = false;
+        double range = 0;
+        double prevrange = 0;
         if(command != "HOLD CURRENT" && command != "") {
             shouldRange = true;
-            range = Integer.valueOf(command);
-        }
+            command = command.substring(0, command.length()-1);
+            range = Double.valueOf(command);
+        }*/
         while(cur < endtime && !needsToEnd && opModeIsActive()) {
-            if(shouldRange) {
-                if (h.range.getDistance(DistanceUnit.INCH) < range) {
+            /*if(shouldRange) {
+                if(range > prevrange + 10 || range < prevrange - 10) {
+                    range = prevrange;
+                }
+                if (h.backRange.getDistance(DistanceUnit.INCH) < range) {
                     needsToEnd = true;
                 }
-            }
+                prevrange = range;
+                telemetry.addData("backRange",range);
+            }*/
             a = where(a);
             cur = e.seconds();
             dt = cur - prev;
@@ -269,40 +237,48 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
     }
 
+    void foundation_up() {
+        h.hookRight.setPosition(0.5);
+        h.hookLeft.setPosition(0.6);
+    }
+    void foundation_down() {
+        h.hookRight.setPosition(0);
+        h.hookLeft.setPosition(1);
+    }
     void grab_stone() {
         h.grabArm.setPosition(0.40);
         h.grabClaw.setPosition(0);
-        sleep(650);
+        sleep(520);
     }
 
     void raise_stone() {
         h.grabArm.setPosition(0.8);
-        sleep(700);
+        sleep(660);
     }
 
     void drop_stone() {
         h.grabArm.setPosition(0.45);
         sleep(500);
         h.grabClaw.setPosition(0.6);
-        sleep(400);
+        sleep(300);
         h.grabArm.setPosition(0.8);
     }
     void ready_arm() {
         h.grabClaw.setPosition(0.6);
         h.grabArm.setPosition(0.45);
-        sleep(500);
+        sleep(450);
     }
 
     void range_drive(double distance, double power) {
 
-        if(h.range.getDistance(DistanceUnit.INCH) < distance) {
+        if(h.backRange.getDistance(DistanceUnit.INCH) < distance) {
 
             h.leftDrive.setPower(-power);
             h.backRDrive.setPower(-power);
             h.rightDrive.setPower(power);
             h.backLDrive.setPower(power);
 
-        } else if(h.range.getDistance(DistanceUnit.INCH) > distance) {
+        } else if(h.backRange.getDistance(DistanceUnit.INCH) > distance) {
 
             h.leftDrive.setPower(power);
             h.backRDrive.setPower(power);
@@ -311,7 +287,7 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
         }
 
-        while(!within(h.range.getDistance(DistanceUnit.INCH), distance, 1) && opModeIsActive()) {
+        while(!within(h.backRange.getDistance(DistanceUnit.INCH), distance, 1) && opModeIsActive()) {
 
             idle();
 
@@ -744,6 +720,92 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
     double map(double x, double min_a, double max_a, double min_b, double max_b) {
         return (x - min_a) / (max_a - min_a) * (max_b - min_b) + min_b;
+    }
+
+    void vision_thread(final LockObject o) {
+
+        final OpenCvCamera webcam;
+        final NewSkyStonePipeline newSkyStonePipeline;
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        newSkyStonePipeline = new NewSkyStonePipeline();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int stone = -1;
+                boolean shouldEnd = false;
+                webcam.openCameraDevice();
+                newSkyStonePipeline.setView_source(1);
+                webcam.setPipeline(newSkyStonePipeline);
+                try {
+                    webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
+                }catch (OpenCvCameraException e){
+                    e.printStackTrace();
+                    return;
+                }
+                newSkyStonePipeline.setView_source(3);
+                boolean found = false;
+                ElapsedTime et = new ElapsedTime();
+                et.reset();
+                while (!isStopRequested() && !isStarted() && !shouldEnd) {
+                    try {
+                        try {
+                            ArrayList<MatOfPoint> contours = newSkyStonePipeline.convexHullsOutput();
+                            MatOfPoint2f[] contoursPoly = new MatOfPoint2f[contours.size()];
+                            Rect[] boundRect = new Rect[contours.size()];
+                            try {
+                                for (int i = 0; i < contours.size(); i++) {
+                                    contoursPoly[i] = new MatOfPoint2f();
+                                    Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contoursPoly[i], 3, true);
+                                    boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contoursPoly[i].toArray()));
+                                }
+                            } catch (IndexOutOfBoundsException e) {
+                                e.printStackTrace();
+                            }
+
+                            if (boundRect.length == 0 && et.seconds() > 3) {
+                                stone = 3;
+                                found = true;
+                            } else {
+                                if (boundRect[0].x > 217) {
+                                    stone = 1;
+                                    found = true;
+                                } else {
+                                    stone = 2;
+                                    found = true;
+                                }
+                            }
+
+                        } catch (NullPointerException e) {
+                            e.printStackTrace();
+                        }
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        e.printStackTrace();
+                    }
+                    if(found) {
+                        synchronized (o) {
+                            o.result = stone;
+                            shouldEnd = o.shouldEnd;
+                        }
+                        et.reset();
+                        found = false;
+                    }
+                }
+                webcam.stopStreaming();
+                webcam.closeCameraDevice();
+            }
+        }).start();
+
+    }
+
+    class LockObject {
+        LockObject(int result_) {
+            result = result_;
+        }
+        public int result;
+        public boolean shouldEnd = false;
     }
 
 }

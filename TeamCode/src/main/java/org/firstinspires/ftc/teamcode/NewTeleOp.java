@@ -25,7 +25,7 @@ public class NewTeleOp extends LinearOpMode {
 
     double power = 0.4;
     double pos = 0;
-    double multiplier = 0.92;
+    double multiplier = 0.82;
     boolean moved = false;
     boolean slid = false;
     boolean foundation = false;
@@ -64,6 +64,9 @@ public class NewTeleOp extends LinearOpMode {
         double[] store = {0,0};
         while (opModeIsActive()) {
 
+            robot.grabArm.setPosition(0.8);
+            robot.grabClaw.setPosition(0);
+
             if (gamepad1.left_bumper) {
                 multiplier = 0.92;
             } else if (gamepad1.right_bumper) {
@@ -76,7 +79,7 @@ public class NewTeleOp extends LinearOpMode {
             }
 
             robot.manualDrive(multiplier);
-            if((notResting(gamepad1.left_stick_x) || notResting(gamepad1.left_stick_y)) && resting(gamepad1.right_stick_x)) {
+            /*if((notResting(gamepad1.left_stick_x) || notResting(gamepad1.left_stick_y)) && resting(gamepad1.right_stick_x)) {
                 if(first_time) {
                     store = robot.moveRobot2(hold_angle, store, true);
                     first_time = false;
@@ -91,7 +94,7 @@ public class NewTeleOp extends LinearOpMode {
                 robot.moveRobot();
                 hold_angle = robot.gyro.getHeading();
                 telemetry.addData("Changin angle:", hold_angle);
-            }
+            }*/
             robot.moveRobot();
 
             if(gamepad1.dpad_left) {
@@ -134,8 +137,6 @@ public class NewTeleOp extends LinearOpMode {
             } else if (gamepad2.y){
                 robot.big.setPosition(0.6);
             }
-            p.setPower(1.0);
-            p1.setPower(-1.0);
 
             telemetry.addData("s servo",robot.small.getPosition());
             telemetry.addData("B servo", robot.big.getPosition());
@@ -177,11 +178,11 @@ public class NewTeleOp extends LinearOpMode {
             }
             lastResetState = curResetState;
             if(foundation) {
-                robot.hookLeft.setPosition(1);
-                robot.hookRight.setPosition(1);
-            } else {
-                robot.hookLeft.setPosition(0);
                 robot.hookRight.setPosition(0);
+                robot.hookLeft.setPosition(1);
+            } else {
+                robot.hookRight.setPosition(0.5);
+                robot.hookLeft.setPosition(0.6);
             }
 
             curResetState2 = (gamepad2.y);
@@ -190,9 +191,9 @@ public class NewTeleOp extends LinearOpMode {
             }
             lastResetState2 = curResetState2;
             if(smallmove) {
-                robot.small.setPosition(0);
+                robot.small.setPosition(0.35);
             } else {
-                robot.small.setPosition(0.8);
+                robot.small.setPosition(0);
             }
 
             curResetState4 = (gamepad2.a);
@@ -201,9 +202,9 @@ public class NewTeleOp extends LinearOpMode {
             }
             lastResetState4 = curResetState4;
             if(bigmove) {
-                robot.big.setPosition(0.6);
+                robot.big.setPosition(0.78);
             } else {
-                robot.big.setPosition(0.05);
+                robot.big.setPosition(0.08);
             }
 
             double lifterPower = gamepad2.left_stick_y * 0.6;
@@ -215,6 +216,9 @@ public class NewTeleOp extends LinearOpMode {
             double collecPowe = gamepad2.right_stick_y;
             Collec1.setPower(collecPowe);
             Collec2.setPower(collecPowe);
+
+            p.setPower(-collecPowe);
+            p1.setPower(collecPowe);
 
             telemetry.addData("fl", robot.leftDrive.getCurrentPosition());
             telemetry.addData("fr", robot.rightDrive.getCurrentPosition());

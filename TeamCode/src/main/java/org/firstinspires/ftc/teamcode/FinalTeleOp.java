@@ -214,7 +214,7 @@ public class FinalTeleOp extends LinearOpMode {
             telemetry.addData("fr", robot.rightDrive.getCurrentPosition());
             telemetry.addData("bl", robot.backLDrive.getCurrentPosition());
             telemetry.addData("br", robot.backRDrive.getCurrentPosition());
-            telemetry.addData("range", robot.range.getDistance(DistanceUnit.INCH));
+            telemetry.addData("backRange", robot.range.getDistance(DistanceUnit.INCH));
 
             telemetry.update();
         }

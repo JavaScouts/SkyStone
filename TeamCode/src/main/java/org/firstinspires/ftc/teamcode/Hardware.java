@@ -4,12 +4,10 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
-import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -33,7 +31,8 @@ public class Hardware {
     Servo grabClaw;
 
     ModernRoboticsI2cGyro gyro;
-    ModernRoboticsI2cRangeSensor range;
+    ModernRoboticsI2cRangeSensor backRange;
+    Rev2mDistanceSensor frontRange;
     ModernRoboticsI2cColorSensor color;
     ModernRoboticsI2cColorSensor color2;
 
@@ -73,13 +72,13 @@ public class Hardware {
         Rev = map.dcMotor.get("rev");
         Rev.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        hookLeft = map.servo.get("found");
-        hookRight = map.servo.get("found2");
+        hookLeft = map.servo.get("found2");
+        hookRight = map.servo.get("found");
         small = map.servo.get("small");
         big = map.servo.get("big");
         grabArm = map.servo.get("ga");
         grabClaw = map.servo.get("gc");
-        range = map.get(ModernRoboticsI2cRangeSensor.class, "r");
+        frontRange = map.get(Rev2mDistanceSensor.class, "r");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
 
         //reverse nessecary motors
@@ -89,11 +88,13 @@ public class Hardware {
         backRDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec1.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec2.setDirection(DcMotorSimple.Direction.REVERSE);
+/*
 
         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+*/
 
         setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //STOP EVERYTHING
@@ -164,7 +165,7 @@ public class Hardware {
 
     }
 
-    private void moveRobot(double axial, double lateral, double yaw) {
+    void moveRobot(double axial, double lateral, double yaw) {
 
         setAxial(axial);
         setYaw(yaw);
@@ -325,7 +326,7 @@ public class Hardware {
 
         double robotError;
 
-        // calculate error in -179 to +180 range  (
+        // calculate error in -179 to +180 backRange  (
         robotError = targetAngle - gyro.getIntegratedZValue();
         while (robotError > 180) robotError -= 360;
         while (robotError <= -180) robotError += 360;
