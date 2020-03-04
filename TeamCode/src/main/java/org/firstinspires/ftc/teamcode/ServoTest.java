@@ -21,25 +21,19 @@ public class ServoTest extends LinearOpMode {
 
         waitForStart();
 
-        double pleft = 0;
-        double pright = 0;
+        double w;
         while(opModeIsActive()) {
 
-            double left = Math.abs(gamepad1.left_stick_y);
-            double right = Math.abs(gamepad1.right_stick_y);
-            if(left != 0) {
-                h.hookLeft.setPosition(left);
-                pleft = left;
-            } else if ( right != 0){
-                h.hookRight.setPosition(right);
-                pright = right;
+            w = Math.abs(gamepad2.left_stick_y);
+            if(gamepad2.a) {
+                h.grabClaw.setPosition(0);
+            } else if(gamepad2.y) {
+                h.grabClaw.setPosition(0.6);
             } else {
-                h.hookLeft.setPosition(pleft);
-                h.hookRight.setPosition(pright);
+                h.grabClaw.setPosition(w);
             }
 
-            telemetry.addData("left", pleft);
-            telemetry.addData("right", pright);
+            telemetry.addData("", w);
             telemetry.update();
 
         }

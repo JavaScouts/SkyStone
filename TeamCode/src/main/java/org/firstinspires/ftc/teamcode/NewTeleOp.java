@@ -62,15 +62,16 @@ public class NewTeleOp extends LinearOpMode {
         boolean first_time = true;
         double hold_angle= 0;
         double[] store = {0,0};
+        multiplier = 0.65;
         while (opModeIsActive()) {
 
-            robot.grabArm.setPosition(0.8);
-            robot.grabClaw.setPosition(0);
+            robot.grabArm.setPosition(-gamepad2.right_trigger+0.72);
+            robot.grabClaw.setPosition(gamepad2.left_trigger);
 
             if (gamepad1.left_bumper) {
-                multiplier = 0.92;
+                multiplier = 0.7;
             } else if (gamepad1.right_bumper) {
-                multiplier = 1;
+                multiplier = 0.4;
             }
 
             if (gamepad1.right_stick_x == 0) {
@@ -207,14 +208,14 @@ public class NewTeleOp extends LinearOpMode {
                 robot.big.setPosition(0.08);
             }
 
-            double lifterPower = gamepad2.left_stick_y * 0.6;
+            double lifterPower = gamepad2.left_stick_y * 0.4;
             if (gamepad2.left_trigger > 0.05) {
                 lifterPower -= 0.001;
             }
             Rev.setPower(lifterPower);
 
             double collecPowe = gamepad2.right_stick_y;
-            Collec1.setPower(collecPowe);
+            Collec1.setPower(-collecPowe);
             Collec2.setPower(collecPowe);
 
             p.setPower(-collecPowe);

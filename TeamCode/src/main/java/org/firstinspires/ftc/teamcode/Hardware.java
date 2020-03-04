@@ -31,7 +31,7 @@ public class Hardware {
     Servo grabClaw;
 
     ModernRoboticsI2cGyro gyro;
-    ModernRoboticsI2cRangeSensor backRange;
+    ModernRoboticsI2cRangeSensor sideRange;
     Rev2mDistanceSensor frontRange;
     ModernRoboticsI2cColorSensor color;
     ModernRoboticsI2cColorSensor color2;
@@ -78,7 +78,9 @@ public class Hardware {
         big = map.servo.get("big");
         grabArm = map.servo.get("ga");
         grabClaw = map.servo.get("gc");
+        grabClaw.setDirection(Servo.Direction.REVERSE);
         frontRange = map.get(Rev2mDistanceSensor.class, "r");
+        sideRange = map.get(ModernRoboticsI2cRangeSensor.class, "r_right");
         gyro = map.get(ModernRoboticsI2cGyro.class, "g");
 
         //reverse nessecary motors
@@ -88,13 +90,11 @@ public class Hardware {
         backRDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec1.setDirection(DcMotorSimple.Direction.FORWARD);
         Collec2.setDirection(DcMotorSimple.Direction.REVERSE);
-/*
 
         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-*/
 
         setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //STOP EVERYTHING

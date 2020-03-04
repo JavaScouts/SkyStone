@@ -2,8 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name = "Auto B1")
-public class Auto_B1_New extends BaseTrajectory {
+@Autonomous(name = "Auto B1 no found")
+public class Auto_B1_NOFOUN extends BaseTrajectory {
 
     // TO EDIT SERVO POSITIONINGS AND TIMINGS, SEE LINES 214 - 236 in BaseTrajectory
     // To EDIT others its pretty self-explanatory
@@ -18,8 +18,8 @@ public class Auto_B1_New extends BaseTrajectory {
     private static final double STONE_5 = 17;
     private static final double STONE_6 = 24;
 
-    private static final double WALL_TO_STONE = 25.2;
-    private static final double STRAFE_CORRECTION = 7;
+    private static final double WALL_TO_STONE = 27.3;
+    private static final double STRAFE_CORRECTION = 9;
     private static final double DROP_CORRECTION = 5;
     private static final double RETURN_CORRECTION = 9;
 
@@ -30,6 +30,7 @@ public class Auto_B1_New extends BaseTrajectory {
     @Override
     public void afterRun() {
 
+        sleep(5000);
         ready_arm();
         foundation_up();
         switch(stone) {
@@ -118,7 +119,7 @@ public class Auto_B1_New extends BaseTrajectory {
 
         moveRelative(0, DROP_CORRECTION, 0, 0.27);
         drop_stone();
-        moveRelative(0, -RETURN_CORRECTION-4.5, 0, 0.27);
+        moveRelative(0, -RETURN_CORRECTION-3, 0, 0.27);
 
         switch(stone) {
 
@@ -167,15 +168,7 @@ public class Auto_B1_New extends BaseTrajectory {
         drop_stone();
         //TODO add another stone
 
-        curve_it(90, -0.3, 0.3);
-        moveRelative(8,-5,0, 0.7, "HOLD CURRENT");
-        foundation_down();
-        sleep(500);
-        moveRelative(-26,0,0,1.3, "HOLD CURRENT");
-        curve_it(175,-0.3,0.3);
-        moveRelative(12,0,0,0.5,"HOLD CURRENT");
-        foundation_up();
-        moveRelative(-25,10, 0,1.5);
+        moveRelative(25,0,0,2);
 
     }
 

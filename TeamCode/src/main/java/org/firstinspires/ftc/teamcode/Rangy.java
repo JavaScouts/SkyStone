@@ -21,7 +21,7 @@ public class Rangy extends LinearOpMode {
             h.manualDrive(0.8);
             h.moveRobot();
 
-            dist = h.backRange.getDistance(DistanceUnit.INCH);
+            dist = h.sideRange.getDistance(DistanceUnit.INCH);
             telemetry.addData("dist",dist);
             telemetry.update();
 

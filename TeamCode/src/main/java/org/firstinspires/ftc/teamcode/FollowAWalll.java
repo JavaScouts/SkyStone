@@ -38,7 +38,7 @@ public class FollowAWalll extends LinearOpMode {
         double leftBackPower = 0;
         double rightFrontPower = 0;
         double rightBackPower = 0;
-        double range = robot.backRange.getDistance(DistanceUnit.INCH);
+        double range = robot.sideRange.getDistance(DistanceUnit.INCH);
         telemetry.addData("backRange", range);
         telemetry.addData("error", range-distance);
 

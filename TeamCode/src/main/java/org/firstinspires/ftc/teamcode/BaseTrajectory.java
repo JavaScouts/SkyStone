@@ -24,12 +24,12 @@ import java.util.ArrayList;
 
 public abstract class BaseTrajectory extends LinearOpMode {
 
-    static final double PI = Math.PI;
+    private static final double PI = Math.PI;
     Pose[] p = new Pose[]{};
     Pose[] sp = new Pose[]{};
     double[] timings = new double[]{};
     ArrayList<Integer> used = new ArrayList<>(6);
-    boolean drive_only = false;
+    private boolean drive_only = false;
 
     private Hardware h = new Hardware();
     private Pose startPose = new Pose(0, 0, 0);
@@ -39,11 +39,12 @@ public abstract class BaseTrajectory extends LinearOpMode {
     private double dt;
     private ModernRoboticsI2cGyro g;
     private double KPT = 40;
-    private double KPM = 0.5;
+    private double KPY = 1;
     private double KI = 0.0;
     private double KD = 0.5;
+    private double KIY = 0.0;
+    private double KDY = 0.0;
 
-    LockObject lock;
     int intermediateposition;
     int stone = -1;
     //customizable
@@ -59,7 +60,7 @@ public abstract class BaseTrajectory extends LinearOpMode {
 
     void beforeRun() {
 
-        lock = new LockObject(-1);
+        final LockObject lock = new LockObject(-1);
 
         h.init(hardwareMap, this);
         h.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -109,7 +110,6 @@ public abstract class BaseTrajectory extends LinearOpMode {
         return robotError;
     }
 
-
     void moveRelative(double x, double y, double rot, double time) {
         moveRelative(x, y, rot, time, "");
     }
@@ -126,19 +126,30 @@ public abstract class BaseTrajectory extends LinearOpMode {
         double endtime = toFollow.tf;
         double cur = e.seconds();
         Pose velocity;
-        double err = 0;
-        double prev_err = 0;
-        double integral = 0;
+        double        err = 0;
+        double   prev_err = 0;
+        double   integral = 0;
         double derivative = 0;
-        double output = 0;
-        double output1 = 0;
-        double output2 = 0;
+        double     output = 0;
+        double        err2 = 0;
+        double   prev_err2 = 0;
+        double   integral2 = 0;
+        double derivative2 = 0;
+        double     outputr = 0;
+        double    output1 = 0;
+        double    output2 = 0;
         dt = 0;
         double prev = 0;
         boolean needsToEnd = false;
+        boolean shouldRange = true;
         if(command.equals("HOLD CURRENT")) {
             rot = g.getIntegratedZValue();
         }
+        if(command.equals("NO RANGE")) {
+            shouldRange = false;
+        }
+        double range = h.sideRange.getDistance(DistanceUnit.INCH);
+        double prevrange = range;
         /*boolean shouldRange = false;
         double range = 0;
         double prevrange = 0;
@@ -175,10 +186,23 @@ public abstract class BaseTrajectory extends LinearOpMode {
             //output = map(output, -max_error, max_error, -adj, adj);
             //telemetry.addData("adjust_output",output);
             prev_err = err;
-            telemetry.addData("p", err);
-            telemetry.addData("i", integral);
-            telemetry.addData("d", derivative);
-/*
+
+            if(shouldRange) {
+                range = h.sideRange.getDistance(DistanceUnit.INCH);
+                if (range > prevrange + 8 || range < prevrange - 8) {
+                    range = prevrange;
+                }
+                err2 = y - range;
+                integral2 = integral2 + (err2 * dt);
+                derivative2 = (err2 - prev_err2) / dt;
+                outputr = (KPY * err2) + (KI * integral2) + (KD * derivative2);
+                telemetry.addData("output, range", output);
+                //output = map(output, -max_error, max_error, -adj, adj);
+                //telemetry.addData("adjust_output",output);
+                prev_err2 = err2;
+                constantWheels.strafeAdd(outputr);
+            }
+            /*
             err = velocity.x - a[5];
             output1 = (KPM * err);
             constantWheels.forwardAdd(output1);
@@ -248,12 +272,12 @@ public abstract class BaseTrajectory extends LinearOpMode {
     void grab_stone() {
         h.grabArm.setPosition(0.40);
         h.grabClaw.setPosition(0);
-        sleep(520);
+        sleep(700);
     }
 
     void raise_stone() {
         h.grabArm.setPosition(0.8);
-        sleep(660);
+        sleep(720);
     }
 
     void drop_stone() {
@@ -267,34 +291,6 @@ public abstract class BaseTrajectory extends LinearOpMode {
         h.grabClaw.setPosition(0.6);
         h.grabArm.setPosition(0.45);
         sleep(450);
-    }
-
-    void range_drive(double distance, double power) {
-
-        if(h.backRange.getDistance(DistanceUnit.INCH) < distance) {
-
-            h.leftDrive.setPower(-power);
-            h.backRDrive.setPower(-power);
-            h.rightDrive.setPower(power);
-            h.backLDrive.setPower(power);
-
-        } else if(h.backRange.getDistance(DistanceUnit.INCH) > distance) {
-
-            h.leftDrive.setPower(power);
-            h.backRDrive.setPower(power);
-            h.rightDrive.setPower(-power);
-            h.backLDrive.setPower(-power);
-
-        }
-
-        while(!within(h.backRange.getDistance(DistanceUnit.INCH), distance, 1) && opModeIsActive()) {
-
-            idle();
-
-        }
-
-        h.setPower(0);
-
     }
 
     boolean within(double val1, double val2, double thresh) {
